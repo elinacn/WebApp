@@ -11,7 +11,7 @@
 - At least one entity must support full CRUD: Create, Read, Update, Delete.
 - The group must submit project documentation of 2000–5000 words in English.
 
-## For your Task 2 MVP, I would set these functional requirements:
+## For Task 2 MVP:
 - Users can view available quizzes.
 - Users can open and complete a quiz.
 - Users can select and submit answers.
