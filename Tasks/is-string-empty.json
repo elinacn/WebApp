@@ -10,8 +10,8 @@
             "expected": true
         },
         {
-            "input": [],
-            "expected": true
+            "input": ["empty"],
+            "expected": false
         },
         {
             "input": [" "],

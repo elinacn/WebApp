@@ -15,7 +15,7 @@
         },
         {
             "input": [-5],
-            "expected": -25
+            "expected": 25
         }
     ]
 }

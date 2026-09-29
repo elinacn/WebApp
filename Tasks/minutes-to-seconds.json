@@ -3,7 +3,7 @@
     "title": "Minutes to seconds",
     "description": "Write a method that takes in minutes and returns it in seconds.",
     "difficulty": "beginner",
-    "startCode": "public static int minutesInSeconds(int minutes) {\n //Your code here\n}",
+    "startCode": "public static double minutesInSeconds(int minutes) {\n //Your code here\n}",
     "tests": [
         {
             "input": [5],
