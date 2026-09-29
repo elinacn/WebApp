@@ -93,6 +93,6 @@ C:\Users\lawk2\Desktop\Webapp project\WebApp\WebApp\obj\Debug\net10.0\refint\Web
 C:\Users\lawk2\Desktop\Webapp project\WebApp\WebApp\obj\Debug\net10.0\WebApp.pdb
 C:\Users\lawk2\Desktop\Webapp project\WebApp\WebApp\obj\Debug\net10.0\WebApp.genruntimeconfig.cache
 C:\Users\lawk2\Desktop\Webapp project\WebApp\WebApp\obj\Debug\net10.0\ref\WebApp.dll
-C:\Users\lawk2\Desktop\Webapp project\WebApp\WebApp\obj\Debug\net10.0\compressed\cyyammxk5f-{0}-v91zbyyxx8-v91zbyyxx8.gz
-C:\Users\lawk2\Desktop\Webapp project\WebApp\WebApp\obj\Debug\net10.0\compressed\nrt9wfei13-{0}-6hdgzuww2k-6hdgzuww2k.gz
-C:\Users\lawk2\Desktop\Webapp project\WebApp\WebApp\obj\Debug\net10.0\compressed\lcaz16i7pu-{0}-6hdgzuww2k-6hdgzuww2k.gz
+C:\Users\lawk2\Desktop\Webapp project\WebApp\WebApp\obj\Debug\net10.0\compressed\nrt9wfei13-{0}-fcjaoapmfy-fcjaoapmfy.gz
+C:\Users\lawk2\Desktop\Webapp project\WebApp\WebApp\obj\Debug\net10.0\compressed\lcaz16i7pu-{0}-fcjaoapmfy-fcjaoapmfy.gz
+C:\Users\lawk2\Desktop\Webapp project\WebApp\WebApp\obj\Debug\net10.0\compressed\cyyammxk5f-{0}-gp05nw3bva-gp05nw3bva.gz
