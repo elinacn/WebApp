@@ -1,0 +1,145 @@
+{
+    "questType": "quiz",
+    "id": "quiz2",
+    "title": "The trial - Operators",
+    "description": "Your adventure has already begun, but the path to mastery is still long. Continue your adventure by conquering operators.",
+    "difficulty": "knight",
+    "questions": [
+        {
+            "id": "q1",
+            "type": "multipleChoice",
+            "text": "Which operator is used to add values?",
+            "points": 1,
+            "options": [
+                {
+                    "id": "a", 
+                    "text": "+"
+                },
+                {
+                    "id": "b", 
+                    "text": "++"
+                },
+                {
+                    "id": "c", 
+                    "text": ".add()"
+                },
+                {
+                    "id": "d", 
+                    "text": ".addition()"
+                }
+            ],
+            "correctOptionId": "a",
+            "explaination": "The '+' operator is used for addition."
+        },
+        {
+            "id": "q2",
+            "type": "freeText",
+            "text": "Which operator is used to multiply values?",
+            "points": 2,
+            "acceptedAnswers": ["*"],
+            "explaination": "The '*' operator is used for multiplication."
+        },
+        {
+            "id": "q3",
+            "type": "multipleChoice",
+            "text": "Which operator is used to assign a value to a variable?",
+            "points": 1,
+            "options": [
+                {
+                    "id": "a", 
+                    "text": "=="
+                },
+                {
+                    "id": "b", 
+                    "text": "="
+                },
+                {
+                    "id": "c",
+                    "text": "!="
+                },
+                {
+                    "id": "d", 
+                    "text": "=>"
+                }
+            ],
+            "correctOptionId": "b",
+            "explaination": "The '=' operator assigns a value to a variable. Example: boolean isHungry = true"
+        },
+        {
+            "id": "q4",
+            "type": "freeText",
+            "text": "Which operator is used to check if two values are equal?",
+            "points": 2,
+            "acceptedAnswers": ["=="],
+            "explaination": "The '==' operator checks whether two values are equal."
+        },
+        {
+            "id": "q5",
+            "type": "multipleChoice",
+            "text": "What does the != operator check?",
+            "points": 1,
+            "options": [
+                {
+                    "id": "a", 
+                    "text": "More than"
+                },
+                {
+                    "id": "b", 
+                    "text": "Less than"
+                },
+                {
+                    "id": "c", 
+                    "text": "Equal"
+                },
+                {
+                    "id": "d", 
+                    "text": "Not equal"
+                }
+            ],
+            "correctOptionId": "d",
+            "explaination": "The '!=' operator checks whether two values are not equal."
+        },
+        {
+            "id": "q6",
+            "type": "freeText",
+            "text": "Which operator means greater than?",
+            "points": 2,
+            "acceptedAnswers": [">"],
+            "explaination": "The '>' operator checks whether the value on the left is greater than the value on the right."
+        },
+        {
+            "id": "q7",
+            "type": "multipleChoice",
+            "text": "Which operator represents logical AND in Java?",
+            "points": 1,
+            "options": [
+                {
+                    "id": "a", 
+                    "text": "=="
+                },
+                {
+                    "id": "b", 
+                    "text": "!!"
+                },
+                {
+                    "id": "c", 
+                    "text": "&"
+                },
+                {
+                    "id": "d", 
+                    "text": "&&"
+                }
+            ],
+            "correctOptionId": "d",
+            "explaination": "The '&&' operator represents logical AND. This means that both conditions must be true."
+        },
+        {
+            "id": "q8",
+            "type": "freeText",
+            "text": "Which operator represents logical OR in Java?",
+            "points": 2,
+            "acceptedAnswers": ["||"],
+            "explaination": "The '||' operator represents logical OR. This means that at either one or both of the conditions must be true."
+        }
+    ]
+}
