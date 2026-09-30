@@ -1,0 +1,70 @@
+@{
+    ViewData["Title"] = "Profile";
+}
+
+@* Placeholder data until we can connect the stuff together. *@
+<link rel="stylesheet" href="@Url.Content("~/profile.css")" />
+
+<main class="profile-container">
+    <div class="profile-title-bar">
+        <h1>Profile</h1>
+        <span class="profile-preview-label">Sample profile</span>
+    </div>
+
+    <section class="profile-header">
+        <div class="profile-avatar">JN</div>
+        <div class="profile-user-details">
+            <p class="profile-label">Your learning journey</p>
+            <h2 id="profile-name">Johan</h2>
+            <p class="profile-username">@("@johan")</p>
+            <p class="profile-bio">I love questions!</p>
+        </div>
+        <div class="profile-streak">
+            <span class="profile-streak-icon">🔥</span>
+            <p>Current streak:<strong>5 days</strong></p>
+        </div>
+    </section>
+
+    <section class="profile-progress">
+        <div class="profile-progress-heading">
+            <h2 id="profile-level">Level 2</h2>
+            <span>400 / 1,100 XP</span>
+        </div>
+        <progress class="profile-progress-bar" value="400" max="1100">400 / 1,100 XP</progress>
+        <p>700 XP to level 3</p>
+    </section>
+
+    <section class="profile-stats">
+        <div class="profile-stat-card"><strong>12</strong><span>Quizzes completed</span></div>
+        <div class="profile-stat-card"><strong>5</strong><span>Challenges completed</span></div>
+        <div class="profile-stat-card"><strong>3</strong><span>Achievements earned</span></div>
+    </section>
+
+    <section class="profile-achievements">
+        <h2 id="profile-achievements-title">Achievements</h2>
+        <div class="profile-achievement-grid">
+            <article class="profile-achievement-card">
+                <span class="profile-badge">✓</span>
+                <h3>First quest</h3><p>Complete your first quiz.</p>
+            </article>
+            <article class="profile-achievement-card">
+                <span class="profile-badge profile-badge-gold">ϟ</span>
+                <h3>On a roll</h3><p>Build a 5 day streak.</p>
+            </article>
+            <article class="profile-achievement-card">
+                <span class="profile-badge">☆</span>
+                <h3>Level up</h3><p>Reach level 2.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="profile-activity">
+        <h2 id="profile-activity-title">Recent activity</h2>
+        <ul class="profile-activity-list">
+            <li><div><strong>HTML quiz completed</strong><span>8 / 10 correct * 2 days ago</span></div><span class="profile-xp">+80 XP</span></li>
+            <li><div><strong>CSS quiz completed</strong><span>7 / 8 correct * 4 days ago</span></div><span class="profile-xp">+70 XP</span></li>
+            <li><div><strong>First quest achievement</strong><span>First quiz completed * 5 days ago</span></div><span class="profile-xp">+25 XP</span></li>
+        </ul>
+    </section>
+    <p class="profile-placeholder-note">placeholder for something else.</p>
+</main>
