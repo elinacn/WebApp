@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - WebApp</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/WebApp.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <!-- navbar -->
+    <header class="site-navbar">
+        <div class="navbar-container">
+            <nav class="navbar-menu" itemid="navbarMenu">
+                <ul class="navbar-links">
+                    <!-- eventual redirects to the other pages when they get implemented-->
+                    <li><a class="nav-item-link" asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li><a class="nav-item-link" asp-controller="Quests" asp-action="Quests">Quests</a></li>
+                    <li><a class="nav-item-link" asp-controller="Leaderboard" asp-action="Leaderboard">Leaderboard</a></li>
+                    <li><a class="nav-item-link" asp-controller="Settings" asp-action="Settings">Settings</a></li>
+                </ul>
+            </nav>
+
+        <a class="navbar-logo" asp-controller="Home" asp-action="Index">Logo</a>
+       </div>
+    </header>
+
+    <div class="main-content-wrapper">
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-container text-center">
+            &copy; 2026 - WebApp - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
