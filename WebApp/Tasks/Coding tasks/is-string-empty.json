@@ -1,0 +1,21 @@
+{
+    "id": "10",
+    "title": "Is String empty",
+    "description": "Write a method that returns true if String is empty",
+    "difficulty": "beginner",
+    "startCode": "public static boolean isStringEmpty(String string) {\n //Your code here\n}",
+    "tests": [
+        {
+            "input": [""],
+            "expected": true
+        },
+        {
+            "input": ["empty"],
+            "expected": false
+        },
+        {
+            "input": [" "],
+            "expected": false
+        }
+    ]
+}
