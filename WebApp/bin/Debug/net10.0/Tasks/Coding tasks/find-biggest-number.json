@@ -1,0 +1,21 @@
+{
+    "id": "3",
+    "title": "Find biggest number",
+    "description": "Write a method that finds the biggest number and returns it.",
+    "difficulty": "beginner",
+    "startCode": "public static int biggestNumber(int a, int b) {\n //Your code here\n}",
+    "tests": [
+        {
+            "input": [1, 9],
+            "expected": 9
+        },
+        {
+            "input": [6, 7],
+            "expected": 7
+        },
+        {
+            "input": [-3, -8],
+            "expected": -3
+        }
+    ]
+}

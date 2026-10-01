@@ -1,0 +1,21 @@
+{
+    "id": "2",
+    "title": "Is number even",
+    "description": "Write a method that returns true if the number is even.",
+    "difficulty": "easy",
+    "startCode": "public static boolean isEven(int a) {\n //Your code here\n}",
+    "tests": [
+        {
+            "input": [1],
+            "expected": false
+        },
+        {
+            "input": [10],
+            "expected": true
+        },
+        {
+            "input": [2],
+            "expected": true
+        }
+    ]
+}
