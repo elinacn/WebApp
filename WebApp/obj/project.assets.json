@@ -8,16 +8,16 @@
     "net10.0": []
   },
   "packageFolders": {
-    "C:\\Users\\Froed\\AppData\\Local\\Temp\\cursor-sandbox-cache\\112f85c8d9ba1661b196ce6aca962ff8\\nuget": {}
+    "C:\\Users\\Froed\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Froed\\Documents\\Web-Applikasjoner Eksamen\\WebApp-main\\WebApp\\WebApp.csproj",
+      "projectUniqueName": "C:\\Users\\Froed\\Documents\\GitHub\\WebApp\\WebApp\\WebApp.csproj",
       "projectName": "WebApp",
-      "projectPath": "C:\\Users\\Froed\\Documents\\Web-Applikasjoner Eksamen\\WebApp-main\\WebApp\\WebApp.csproj",
-      "packagesPath": "C:\\Users\\Froed\\AppData\\Local\\Temp\\cursor-sandbox-cache\\112f85c8d9ba1661b196ce6aca962ff8\\nuget",
-      "outputPath": "C:\\Users\\Froed\\Documents\\Web-Applikasjoner Eksamen\\WebApp-main\\WebApp\\obj\\",
+      "projectPath": "C:\\Users\\Froed\\Documents\\GitHub\\WebApp\\WebApp\\WebApp.csproj",
+      "packagesPath": "C:\\Users\\Froed\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Froed\\Documents\\GitHub\\WebApp\\WebApp\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Froed\\AppData\\Roaming\\NuGet\\NuGet.Config"
