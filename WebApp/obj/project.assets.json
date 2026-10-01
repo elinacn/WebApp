@@ -493,11 +493,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/oyvind/Documents/DATA3800/WebApp/WebApplication1/WebApplication1.csproj",
+      "projectUniqueName": "/home/oyvind/Documents/DATA3800/WebApp/WebApp/WebApplication1.csproj",
       "projectName": "WebApplication1",
-      "projectPath": "/home/oyvind/Documents/DATA3800/WebApp/WebApplication1/WebApplication1.csproj",
+      "projectPath": "/home/oyvind/Documents/DATA3800/WebApp/WebApp/WebApplication1.csproj",
       "packagesPath": "/home/oyvind/.nuget/packages/",
-      "outputPath": "/home/oyvind/Documents/DATA3800/WebApp/WebApplication1/obj/",
+      "outputPath": "/home/oyvind/Documents/DATA3800/WebApp/WebApp/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/oyvind/.nuget/NuGet/NuGet.Config"
