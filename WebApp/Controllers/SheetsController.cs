@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using SheetsApp.Data;
-using SheetsApp.Models;
+using WebApp.Models;
+using WebApp.Controllers;
 
-namespace SheetsApp.Controllers;
+namespace WebApp.Controllers;
 
 public class SheetsController : Controller
 {

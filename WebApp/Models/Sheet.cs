@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SheetsApp.Models;
+namespace WebApp.Models;
 
 public class Sheet
 {

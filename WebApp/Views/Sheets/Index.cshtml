@@ -1,0 +1,43 @@
+@model IEnumerable<Sheet>
+@{
+    ViewData["Title"] = "Sheets";
+}
+
+<div class="container py-4">
+    <h1>Sheets</h1>
+
+    <p><a asp-action="Create" class="btn btn-primary">New sheet</a></p>
+
+    @if (!Model.Any())
+    {
+        <p>No sheets yet.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>@Html.DisplayNameFor(m => m.Title)</th>
+                    <th>@Html.DisplayNameFor(m => m.RowCount)</th>
+                    <th>@Html.DisplayNameFor(m => m.CreatedAt)</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@Html.DisplayFor(_ => item.Title)</td>
+                        <td>@Html.DisplayFor(_ => item.RowCount)</td>
+                        <td>@Html.DisplayFor(_ => item.CreatedAt)</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                            <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                            <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

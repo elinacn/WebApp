@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using SheetsApp.Data;
+using WebApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<WebApplication1.Data.SheetsDBContext>(options =>
+builder.Services.AddDbContext<WebApp.Models.SheetsDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SheetsDBContextConnection")));
 
 
