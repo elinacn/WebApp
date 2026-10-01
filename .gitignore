@@ -1,0 +1,11 @@
+# Files generated when .NET builds or runs the app
+[Bb]in/
+[Oo]bj/
+
+# Local Visual Studio cache and personal settings
+.vs/
+*.user
+*.suo
+
+# macOS Finder metadata
+.DS_Store
