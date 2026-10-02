@@ -1,0 +1,16 @@
+@model int
+@{
+    var (heading, message) = Model switch
+    {
+        400 => ("Bad request", "The request was missing something or was not valid."),
+        404 => ("Page not found", "The page or item you were looking for does not exist."),
+        _ => ("Something went wrong", "The request could not be completed.")
+    };
+    ViewData["Title"] = heading;
+}
+
+<div class="container py-4 text-light" data-bs-theme="dark">
+    <h1>@Model – @heading</h1>
+    <p>@message</p>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Back to home</a>
+</div>

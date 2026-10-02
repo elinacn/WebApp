@@ -18,6 +18,8 @@ public class Sheet
     public int RowCount { get; set; }
 
     [DataType(DataType.Date)]
+    // Quoted slashes keep the separator fixed regardless of server culture
+    [DisplayFormat(DataFormatString = "{0:dd'/'MM'/'yyyy}")]
     [Display(Name = "Created")]
     public DateTime CreatedAt { get; set; } = DateTime.Today;
 }
