@@ -1,0 +1,54 @@
+@using WebApp.ViewModels
+@model QuestsPageViewModel
+
+<aside class="quests-sidebar">
+    <a class="quests-nav-item @(Model.ActiveSection == "library" ? "is-active" : null)"
+       asp-controller="Quests"
+       asp-action="Index"
+       asp-route-section="library"
+       asp-route-searchText="@Model.Filter.SearchText"
+       asp-route-difficulty="@Model.Filter.Difficulty">
+        <svg class="quests-nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M.54 3.87.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.993 2.21l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.79l-.637-7A2 2 0 0 1 .5 3z"/>
+        </svg>
+        Course library
+    </a>
+
+    <a class="quests-nav-item @(Model.ActiveSection == "explore" ? "is-active" : null)"
+       asp-controller="Quests"
+       asp-action="Index"
+       asp-route-section="explore"
+       asp-route-searchText="@Model.Filter.SearchText"
+       asp-route-difficulty="@Model.Filter.Difficulty">
+        <svg class="quests-nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
+        </svg>
+        Explore
+    </a>
+
+    <hr class="quests-sidebar-divider" />
+
+    <a class="quests-nav-item @(Model.ActiveSection == "saved" ? "is-active" : null)"
+       asp-controller="Quests"
+       asp-action="Index"
+       asp-route-section="saved"
+       asp-route-searchText="@Model.Filter.SearchText"
+       asp-route-difficulty="@Model.Filter.Difficulty">
+        <svg class="quests-nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="@(Model.ActiveSection == "saved" ? "M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z" : "M2.866 14.85c-.058.16.008.328.13.395l.573.31c.312.17.69.095.873-.22L8 12.197l3.558 2.138c.183.11.561.39.873.22l.573-.31c.122-.067.19-.234.13-.395L11.98 9.71l3.257-3.17c.1-.1.037-.268-.111-.29l-4.492-.64L8.89.792a.246.246 0 0 0-.442 0L6.366 5.61l-4.492.64c-.148.021-.212.19-.11.29l3.255 3.17-1.153 5.14z")"/>
+        </svg>
+        Saved Quests
+    </a>
+
+    <hr class="quests-sidebar-divider" />
+
+    <a class="quests-create-btn @(Model.ActiveSection == "create" ? "is-active" : null)"
+       asp-controller="Quests"
+       asp-action="Index"
+       asp-route-section="create">
+        <svg class="quests-nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+        </svg>
+        Create quest
+    </a>
+</aside>

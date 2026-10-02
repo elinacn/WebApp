@@ -1,0 +1,22 @@
+@using WebApp.ViewModels
+@model QuestCardViewModel
+
+<article class="quest-card">
+    <form class="quest-save-form" asp-controller="Quests" asp-action="ToggleSave" method="post">
+        <input type="hidden" name="questId" value="@Model.Id" />
+        <button class="quest-save-btn @(Model.IsSaved ? "is-saved" : null)"
+                type="submit"
+                aria-label="@(Model.IsSaved ? "Unsave quest" : "Save quest")">
+            @(Model.IsSaved ? "★" : "☆")
+        </button>
+    </form>
+
+    <h3 class="quest-card-title">@Model.Title</h3>
+    <p class="quest-card-code">@Model.CourseCode</p>
+    <p class="quest-card-meta">@Model.Difficulty · @Model.Points pts</p>
+    <p class="quest-card-status">@Model.Status</p>
+    <div class="quest-progress" aria-hidden="true">
+        <span class="quest-progress-fill" style="width: @(Model.ProgressPercent)%"></span>
+    </div>
+    <p class="quest-card-progress">@Model.ProgressPercent%</p>
+</article>
