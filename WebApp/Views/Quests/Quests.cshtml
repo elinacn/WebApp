@@ -17,7 +17,7 @@
         }
         else
         {
-        <form class="quests-filter" method="get" asp-controller="Quests" asp-action="Index">
+        <form class="quests-filter" method="get" asp-controller="Quests" asp-action="Quests">
             <input type="hidden" name="section" value="@Model.ActiveSection" />
 
             <input class="quests-search"
@@ -35,7 +35,7 @@
             </select>
 
             <button class="quests-apply" type="submit">Apply</button>
-            <a class="quests-reset" asp-controller="Quests" asp-action="Index" asp-route-section="@Model.ActiveSection">Reset</a>
+            <a class="quests-reset" asp-controller="Quests" asp-action="Quests" asp-route-section="@Model.ActiveSection">Reset</a>
         </form>
 
         @if (Model.ActiveSection == "library")

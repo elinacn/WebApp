@@ -36,7 +36,7 @@ public class QuestsController : Controller
         _environment = environment;
     }
 
-    public IActionResult Index(string section = "library", string? searchText = null, Difficulty? difficulty = null)
+    public IActionResult Quests(string section = "library", string? searchText = null, Difficulty? difficulty = null)
     {
         _logger.LogInformation("Opened the Quests page for section {Section}.", section);
 
@@ -91,7 +91,7 @@ public class QuestsController : Controller
         _logger.LogInformation("Saved quiz {QuizId} to {FilePath}.", quizId, filePath);
 
         // DATABASE HOOK: connect the database here if we're also gonna store quizzes in the database
-        return RedirectToAction(nameof(Index), new { section = "library" });
+        return RedirectToAction(nameof(Quests), new { section = "library" });
     }
 
     [HttpPost]
@@ -101,13 +101,13 @@ public class QuestsController : Controller
         _logger.LogInformation("Toggled the saved state for quest {QuestId}.", questId);
 
         // DATABASE HOOK: connect the database here, for saving quests type shi
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Quests));
     }
 
     private IActionResult CreateForm(CreateQuestViewModel newQuest)
     {
         ModelState.Clear();
-        return View(nameof(Index), new QuestsPageViewModel
+        return View(nameof(Quests), new QuestsPageViewModel
         {
             ActiveSection = "create",
             NewQuest = newQuest

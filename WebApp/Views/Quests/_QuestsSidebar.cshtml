@@ -4,7 +4,7 @@
 <aside class="quests-sidebar">
     <a class="quests-nav-item @(Model.ActiveSection == "library" ? "is-active" : null)"
        asp-controller="Quests"
-       asp-action="Index"
+       asp-action="Quests"
        asp-route-section="library"
        asp-route-searchText="@Model.Filter.SearchText"
        asp-route-difficulty="@Model.Filter.Difficulty">
@@ -16,7 +16,7 @@
 
     <a class="quests-nav-item @(Model.ActiveSection == "explore" ? "is-active" : null)"
        asp-controller="Quests"
-       asp-action="Index"
+       asp-action="Quests"
        asp-route-section="explore"
        asp-route-searchText="@Model.Filter.SearchText"
        asp-route-difficulty="@Model.Filter.Difficulty">
@@ -30,7 +30,7 @@
 
     <a class="quests-nav-item @(Model.ActiveSection == "saved" ? "is-active" : null)"
        asp-controller="Quests"
-       asp-action="Index"
+       asp-action="Quests"
        asp-route-section="saved"
        asp-route-searchText="@Model.Filter.SearchText"
        asp-route-difficulty="@Model.Filter.Difficulty">
@@ -44,7 +44,7 @@
 
     <a class="quests-create-btn @(Model.ActiveSection == "create" ? "is-active" : null)"
        asp-controller="Quests"
-       asp-action="Index"
+       asp-action="Quests"
        asp-route-section="create">
         <svg class="quests-nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
