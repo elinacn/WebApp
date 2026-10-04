@@ -1,6 +1,5 @@
-using System.Text.Encodings.Web;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
 using WebApp.ViewModels;
 
@@ -14,29 +13,25 @@ namespace WebApp.Controllers;
     LoadRecommendedQuests (You can tell by the title)
     LoadSavedQuest should returns quests that the current user has saved
     toggleSave should save the quest or not (if its already saved)
-    Create creates a quest/quiz json file under tasks as of now this should probably be stored in the database (should've called it CreateQuest or something but can fix that later)
+    Create creates a quest json file under tasks as of now this should probably be stored in the database (should've called it CreateQuest or something but can fix that later)
 
 
 
  */
 public class QuestsController : Controller
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-    };
+    private static readonly string[] QuestionTypes = ["multipleChoice", "freeText"];
 
     private readonly ILogger<QuestsController> _logger;
-    private readonly IWebHostEnvironment _environment;
+    private readonly SheetsDbContext _context;
 
-    public QuestsController(ILogger<QuestsController> logger, IWebHostEnvironment environment)
+    public QuestsController(ILogger<QuestsController> logger, SheetsDbContext context)
     {
         _logger = logger;
-        _environment = environment;
+        _context = context;
     }
 
-    public IActionResult Quests(string section = "library", string? searchText = null, Difficulty? difficulty = null)
+    public async Task<IActionResult> Quests(string section = "library", string? searchText = null, Difficulty? difficulty = null)
     {
         _logger.LogInformation("Opened the Quests page for section {Section}.", section);
 
@@ -51,10 +46,14 @@ public class QuestsController : Controller
             Difficulty = difficulty
         };
 
+        var newQuest = new CreateQuestViewModel();
+        PrepareQuestions(newQuest);
+
         var model = new QuestsPageViewModel
         {
             ActiveSection = section,
             Filter = filter,
+            NewQuest = newQuest,
             ContinueQuests = LoadContinueQuests(filter),
             CompletedQuests = LoadCompletedQuests(filter),
             FeaturedQuests = LoadFeaturedQuests(filter),
@@ -62,38 +61,15 @@ public class QuestsController : Controller
             SavedQuests = LoadSavedQuests(filter)
         };
 
+        if (section == "create" || section == "library")
+        {
+            model.MyQuests = await LoadMyQuestsAsync(section == "library" ? searchText : null);
+        }
+
         return View(model);
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public IActionResult Create(
-        [Bind(Prefix = "NewQuest")] CreateQuestViewModel newQuest,
-        string? addQuestion,
-        int? removeQuestion)
-    {
-        PrepareQuestions(newQuest);
-
-        if (!string.IsNullOrEmpty(addQuestion))
-        {
-            newQuest.Questions.Add(new CreateQuestQuestionViewModel());
-            return CreateForm(newQuest);
-        }
-
-        if (removeQuestion is int index && index >= 0 && index < newQuest.Questions.Count && newQuest.Questions.Count > 1)
-        {
-            newQuest.Questions.RemoveAt(index);
-            return CreateForm(newQuest);
-        }
-
-        var quizId = NextQuizId();
-        var filePath = SaveQuizJson(quizId, newQuest);
-        _logger.LogInformation("Saved quiz {QuizId} to {FilePath}.", quizId, filePath);
-
-        // DATABASE HOOK: connect the database here if we're also gonna store quizzes in the database
-        return RedirectToAction(nameof(Quests), new { section = "library" });
-    }
-
+    // Save
     [HttpPost]
     [ValidateAntiForgeryToken]
     public IActionResult ToggleSave(int questId)
@@ -104,14 +80,164 @@ public class QuestsController : Controller
         return RedirectToAction(nameof(Quests));
     }
 
-    private IActionResult CreateForm(CreateQuestViewModel newQuest)
+    // Create
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(
+        [Bind(Prefix = "NewQuest")] CreateQuestViewModel newQuest,
+        string? addQuestion,
+        int? removeQuestion)
     {
-        ModelState.Clear();
+        PrepareQuestions(newQuest);
+
+        var buttonResult = await HandleQuestionButtonsAsync(newQuest, addQuestion, removeQuestion);
+        if (buttonResult is not null) return buttonResult;
+
+        newQuest.Id = 0;
+        ValidateQuest(newQuest);
+        var title = (newQuest.Title ?? string.Empty).Trim();
+        if (await _context.Quests.AnyAsync(q => q.Title == title))
+            ModelState.AddModelError("NewQuest.Title", "A quest with this title already exists.");
+
+        if (!ModelState.IsValid) return await CreateFormAsync(newQuest, clearModelState: false);
+
+        var quest = new Quest { CreatedAt = DateTime.Today };
+        ApplyToEntity(quest, newQuest);
+        _context.Quests.Add(quest);
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = "Quest created.";
+        return RedirectToAction(nameof(Quests), new { section = "create" });
+    }
+
+    // Update
+    public async Task<IActionResult> Edit(int? id)
+    {
+        if (id is null) return BadRequest();
+
+        var quest = await _context.Quests
+            .AsNoTracking()
+            .Include(q => q.Questions).ThenInclude(q => q.Options)
+            .FirstOrDefaultAsync(q => q.Id == id);
+        if (quest is null) return NotFound();
+
+        var newQuest = ToViewModel(quest);
+        PrepareQuestions(newQuest);
+        return await CreateFormAsync(newQuest, clearModelState: false);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(
+        int id,
+        [Bind(Prefix = "NewQuest")] CreateQuestViewModel newQuest,
+        string? addQuestion,
+        int? removeQuestion)
+    {
+        if (id != newQuest.Id) return BadRequest();
+
+        PrepareQuestions(newQuest);
+
+        var buttonResult = await HandleQuestionButtonsAsync(newQuest, addQuestion, removeQuestion);
+        if (buttonResult is not null) return buttonResult;
+
+        ValidateQuest(newQuest);
+        var title = (newQuest.Title ?? string.Empty).Trim();
+        if (await _context.Quests.AnyAsync(q => q.Title == title && q.Id != id))
+            ModelState.AddModelError("NewQuest.Title", "A quest with this title already exists.");
+
+        if (!ModelState.IsValid) return await CreateFormAsync(newQuest, clearModelState: false);
+
+        var quest = await _context.Quests
+            .Include(q => q.Questions).ThenInclude(q => q.Options)
+            .FirstOrDefaultAsync(q => q.Id == id);
+        if (quest is null) return NotFound();
+
+        // Replace the old questions/options with what was posted
+        _context.QuestQuestions.RemoveRange(quest.Questions);
+        quest.Questions.Clear();
+        ApplyToEntity(quest, newQuest);
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = "Quest updated.";
+        return RedirectToAction(nameof(Quests), new { section = "create" });
+    }
+
+    // Delete
+    public async Task<IActionResult> Delete(int? id)
+    {
+        if (id is null) return BadRequest();
+        var quest = await _context.Quests
+            .AsNoTracking()
+            .Include(q => q.Questions)
+            .FirstOrDefaultAsync(q => q.Id == id);
+        return quest is null ? NotFound() : View(quest);
+    }
+
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var quest = await _context.Quests.FindAsync(id);
+        if (quest is null) return RedirectToAction(nameof(Quests), new { section = "create" });
+
+        _context.Quests.Remove(quest);
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = "Quest deleted.";
+        return RedirectToAction(nameof(Quests), new { section = "create" });
+    }
+
+    private async Task<IActionResult?> HandleQuestionButtonsAsync(
+        CreateQuestViewModel newQuest, string? addQuestion, int? removeQuestion)
+    {
+        if (!string.IsNullOrEmpty(addQuestion))
+        {
+            newQuest.Questions.Add(new CreateQuestQuestionViewModel());
+            return await CreateFormAsync(newQuest);
+        }
+
+        if (removeQuestion is int index && index >= 0 && index < newQuest.Questions.Count && newQuest.Questions.Count > 1)
+        {
+            newQuest.Questions.RemoveAt(index);
+            return await CreateFormAsync(newQuest);
+        }
+
+        return null;
+    }
+
+    private async Task<IActionResult> CreateFormAsync(CreateQuestViewModel newQuest, bool clearModelState = true)
+    {
+        if (clearModelState) ModelState.Clear();
         return View(nameof(Quests), new QuestsPageViewModel
         {
             ActiveSection = "create",
-            NewQuest = newQuest
+            NewQuest = newQuest,
+            MyQuests = await LoadMyQuestsAsync()
         });
+    }
+
+    private async Task<List<QuestListItemViewModel>> LoadMyQuestsAsync(string? searchText = null)
+    {
+        var query = _context.Quests.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            query = query.Where(q => EF.Functions.Like(q.Title, $"%{searchText}%"));
+        }
+
+        return await query
+        .OrderBy(q => q.Title)
+        .Select(q => new QuestListItemViewModel
+        {
+            Id = q.Id,
+            Title = q.Title,
+            Difficulty = q.Difficulty,
+            CreatedAt = q.CreatedAt,
+            QuestionCount = q.Questions.Count,
+            TotalPoints = q.Questions.Sum(x => (int?)x.Points) ?? 0
+        })
+        .ToListAsync();
     }
 
     private static void PrepareQuestions(CreateQuestViewModel newQuest)
@@ -123,129 +249,120 @@ public class QuestsController : Controller
 
         foreach (var question in newQuest.Questions)
         {
-            if (question.Options.Count == 0)
+            foreach (var key in new[] { "a", "b", "c", "d" })
             {
-                question.Options =
-                [
-                    new() { Id = "a" },
-                    new() { Id = "b" },
-                    new() { Id = "c" },
-                    new() { Id = "d" }
-                ];
+                if (!question.Options.Any(o => o.Id == key))
+                {
+                    question.Options.Add(new CreateQuestOptionViewModel { Id = key });
+                }
             }
+
+            question.Options = question.Options.OrderBy(o => o.Id, StringComparer.Ordinal).ToList();
         }
     }
 
-    private string NextQuizId()
+        private void ValidateQuest(CreateQuestViewModel newQuest)
     {
-        var max = 0;
-        var folder = Path.Combine(_environment.ContentRootPath, "Tasks");
-        if (!Directory.Exists(folder))
-        {
-            return "quiz1";
-        }
-
-        foreach (var file in Directory.GetFiles(folder, "*.json"))
-        {
-            try
-            {
-                using var document = JsonDocument.Parse(System.IO.File.ReadAllText(file));
-                if (!document.RootElement.TryGetProperty("id", out var idProperty))
-                {
-                    continue;
-                }
-
-                var id = idProperty.GetString() ?? string.Empty;
-                if (id.StartsWith("quiz", StringComparison.OrdinalIgnoreCase)
-                    && int.TryParse(id[4..], out var number))
-                {
-                    max = Math.Max(max, number);
-                }
-            }
-            catch (JsonException)
-            {
-                // Skips files that are not quiz JSON.
-            }
-        }
-
-        return $"quiz{max + 1}";
-    }
-
-    private string SaveQuizJson(string quizId, CreateQuestViewModel newQuest)
-    {
-        var folder = Path.Combine(_environment.ContentRootPath, "Tasks");
-        Directory.CreateDirectory(folder);
-
-        var questions = new List<Dictionary<string, object?>>();
         for (var i = 0; i < newQuest.Questions.Count; i++)
         {
             var question = newQuest.Questions[i];
-            var item = new Dictionary<string, object?>
+            var prefix = $"NewQuest.Questions[{i}]";
+
+            if (!QuestionTypes.Contains(question.Type))
             {
-                ["id"] = $"q{i + 1}",
-                ["type"] = string.IsNullOrWhiteSpace(question.Type) ? "multipleChoice" : question.Type,
-                ["text"] = question.Text,
-                ["points"] = question.Points,
-                ["explaination"] = question.Explaination
-            };
+                ModelState.AddModelError($"{prefix}.Type", "Choose a valid question type.");
+                continue;
+            }
 
             if (question.Type == "freeText")
             {
-                item["acceptedAnswers"] = question.AcceptedAnswers
-                    .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                if (SplitAnswers(question.AcceptedAnswers).Count == 0)
+                    ModelState.AddModelError($"{prefix}.AcceptedAnswers", "Add at least one accepted answer (comma separated).");
+                continue;
+            }
+
+            var filled = question.Options.Where(o => !string.IsNullOrWhiteSpace(o.Text)).ToList();
+            if (filled.Count < 2)
+            {
+                ModelState.AddModelError($"{prefix}.Options", "Fill in at least two options.");
+            }
+
+            var correct = (question.CorrectOptionId ?? string.Empty).Trim();
+            if (!filled.Any(o => string.Equals(o.Id, correct, StringComparison.OrdinalIgnoreCase)))
+            {
+                ModelState.AddModelError($"{prefix}.CorrectOptionId", "The correct option must be one of the filled-in options.");
+            }
+        }
+    }
+
+    private static List<string> SplitAnswers(string? acceptedAnswers) =>
+    (acceptedAnswers ?? string.Empty)
+        .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+        .ToList();
+
+    private static void ApplyToEntity(Quest quest, CreateQuestViewModel newQuest)
+    {
+        quest.Title = newQuest.Title.Trim();
+        quest.Description = string.IsNullOrWhiteSpace(newQuest.Description) ? null : newQuest.Description.Trim();
+        quest.Difficulty = newQuest.Difficulty.Trim();
+
+        for (var i = 0; i < newQuest.Questions.Count; i++)
+        {
+            var source = newQuest.Questions[i];
+            var question = new QuestQuestion
+            {
+                Position = i,
+                Type = source.Type,
+                Question = source.Question.Trim(),
+                Points = source.Points,
+                Explaination = string.IsNullOrWhiteSpace(source.Explaination) ? null : source.Explaination.Trim()
+            };
+
+            if (source.Type == "freeText")
+            {
+                question.AcceptedAnswers = string.Join(", ", SplitAnswers(source.AcceptedAnswers));
             }
             else
             {
-                item["options"] = question.Options
-                    .Select(option => new Dictionary<string, string>
+                question.CorrectOptionId = (source.CorrectOptionId ?? string.Empty).Trim().ToLowerInvariant();
+                foreach (var option in source.Options.Where(o => !string.IsNullOrWhiteSpace(o.Text)))
+                {
+                    question.Options.Add(new QuestOption
                     {
-                        ["id"] = option.Id,
-                        ["text"] = option.Text
-                    })
-                    .ToList();
-                item["correctOptionId"] = question.CorrectOptionId;
+                        OptionKey = (option.Id ?? string.Empty).Trim().ToLowerInvariant(),
+                        Text = option.Text!.Trim()
+                    });
+                }
             }
 
-            questions.Add(item);
+            quest.Questions.Add(question);
         }
-
-        var quiz = new Dictionary<string, object?>
-        {
-            ["questType"] = "quiz",
-            ["id"] = quizId,
-            ["title"] = newQuest.Title,
-            ["description"] = newQuest.Description,
-            ["difficulty"] = newQuest.Difficulty,
-            ["questions"] = questions
-        };
-
-        var fileName = FileNameFromTitle(newQuest.Title, quizId) + ".json";
-        var filePath = Path.Combine(folder, fileName);
-        if (System.IO.File.Exists(filePath))
-        {
-            filePath = Path.Combine(folder, $"{FileNameFromTitle(newQuest.Title, quizId)}-{quizId}.json");
-        }
-
-        System.IO.File.WriteAllText(filePath, JsonSerializer.Serialize(quiz, JsonOptions));
-        return filePath;
     }
 
-    private static string FileNameFromTitle(string title, string fallback)
+    private static CreateQuestViewModel ToViewModel(Quest quest) => new()
     {
-        var slug = new string(title
-            .ToLowerInvariant()
-            .Select(character => char.IsLetterOrDigit(character) ? character : '-')
-            .ToArray())
-            .Trim('-');
-
-        while (slug.Contains("--", StringComparison.Ordinal))
-        {
-            slug = slug.Replace("--", "-", StringComparison.Ordinal);
-        }
-
-        return string.IsNullOrEmpty(slug) ? fallback : slug;
-    }
-
+        Id = quest.Id,
+        QuestType = "quest",
+        Title = quest.Title,
+        Description = quest.Description,
+        Difficulty = quest.Difficulty,
+        Questions = quest.Questions
+            .OrderBy(q => q.Position)
+            .Select(q => new CreateQuestQuestionViewModel
+            {
+                Id = $"q{q.Position + 1}",
+                Type = q.Type,
+                Question = q.Question,
+                Points = q.Points,
+                CorrectOptionId = q.CorrectOptionId ?? "a",
+                AcceptedAnswers = q.AcceptedAnswers,
+                Explaination = q.Explaination,
+                Options = q.Options
+                    .Select(o => new CreateQuestOptionViewModel { Id = o.OptionKey, Text = o.Text })
+                    .ToList()
+            })
+            .ToList()
+    };
     private List<QuestCardViewModel> LoadContinueQuests(QuestFilterViewModel filter)
     {
         // DATABASE HOOK: connect the database here. 
