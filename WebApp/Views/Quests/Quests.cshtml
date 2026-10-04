@@ -1,0 +1,151 @@
+@using WebApp.Models
+@using WebApp.ViewModels
+@model QuestsPageViewModel
+@{
+    ViewData["Title"] = "Quests";
+}
+
+<link rel="stylesheet" href="~/css/quests.css" asp-append-version="true" />
+
+<div class="quests-page">
+    <partial name="_QuestsSidebar" model="Model" />
+
+    <div class="quests-main">
+        @if (Model.ActiveSection == "create")
+        {
+            <partial name="_CreateQuestForm" model="Model" />
+        }
+        else
+        {
+        <form class="quests-filter" method="get" asp-controller="Quests" asp-action="Quests">
+            <input type="hidden" name="section" value="@Model.ActiveSection" />
+
+            <input class="quests-search"
+                   type="text"
+                   name="searchText"
+                   value="@Model.Filter.SearchText"
+                   placeholder="Search quests" />
+
+            <select class="quests-difficulty" name="difficulty">
+                <option value="">All</option>
+                @foreach (Difficulty level in Enum.GetValues<Difficulty>())
+                {
+                    <option value="@level" selected="@(Model.Filter.Difficulty == level ? "selected" : null)">@level</option>
+                }
+            </select>
+
+            <button class="quests-apply" type="submit">Apply</button>
+            <a class="quests-reset" asp-controller="Quests" asp-action="Quests" asp-route-section="@Model.ActiveSection">Reset</a>
+        </form>
+
+        @if (Model.ActiveSection == "library")
+        {
+            <section class="quests-section">
+                <h2 class="quests-heading">Continue Quest</h2>
+                <div class="quests-row">
+                    @if (Model.ContinueQuests.Count == 0)
+                    {
+                        @for (var i = 0; i < 4; i++)
+                        {
+                            <div class="quest-placeholder"></div>
+                        }
+                    }
+                    else
+                    {
+                        @foreach (var quest in Model.ContinueQuests)
+                        {
+                            <partial name="_QuestCard" model="quest" />
+                        }
+                    }
+                </div>
+            </section>
+
+            <section class="quests-section">
+                <h2 class="quests-heading">Completed Quest</h2>
+                <div class="quests-row">
+                    @if (Model.CompletedQuests.Count == 0)
+                    {
+                        @for (var i = 0; i < 4; i++)
+                        {
+                            <div class="quest-placeholder"></div>
+                        }
+                    }
+                    else
+                    {
+                        @foreach (var quest in Model.CompletedQuests)
+                        {
+                            <partial name="_QuestCard" model="quest" />
+                        }
+                    }
+                </div>
+            </section>
+        }
+
+        @if (Model.ActiveSection == "explore")
+        {
+            <section class="quests-section">
+                <h2 class="quests-heading">Featured Quests</h2>
+                <div class="quests-row">
+                    @if (Model.FeaturedQuests.Count == 0)
+                    {
+                        @for (var i = 0; i < 4; i++)
+                        {
+                            <div class="quest-placeholder"></div>
+                        }
+                    }
+                    else
+                    {
+                        @foreach (var quest in Model.FeaturedQuests)
+                        {
+                            <partial name="_QuestCard" model="quest" />
+                        }
+                    }
+                </div>
+            </section>
+
+            <section class="quests-section">
+                <h2 class="quests-heading">Recommended Quests</h2>
+                <div class="quests-row">
+                    @if (Model.RecommendedQuests.Count == 0)
+                    {
+                        @for (var i = 0; i < 4; i++)
+                        {
+                            <div class="quest-placeholder"></div>
+                        }
+                    }
+                    else
+                    {
+                        @foreach (var quest in Model.RecommendedQuests)
+                        {
+                            <partial name="_QuestCard" model="quest" />
+                        }
+                    }
+                </div>
+            </section>
+        }
+
+        @if (Model.ActiveSection == "saved")
+        {
+            <section class="quests-section">
+                <h2 class="quests-heading">Saved Quests</h2>
+                <div class="quests-grid">
+                    @if (Model.SavedQuests.Count == 0)
+                    {
+                        @for (var i = 0; i < 4; i++)
+                        {
+                            <div class="quest-placeholder"></div>
+                        }
+                    }
+                    else
+                    {
+                        @foreach (var quest in Model.SavedQuests)
+                        {
+                            <partial name="_QuestCard" model="quest" />
+                        }
+                    }
+                </div>
+            </section>
+        }
+        }
+    </div>
+</div>

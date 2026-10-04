@@ -1,17 +1,31 @@
+using Microsoft.EntityFrameworkCore;
+using WebApp.Models;
+
 var builder = WebApplication.CreateBuilder(args);
+
+
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<WebApp.Models.SheetsDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("SheetsDBContextConnection")));
+
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// This middleware will handle exceptions and redirect to the    
+// Error action in the Home controller as long as the application is not in development mode.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+// This middleware will handle status codes and redirect
+//  to the StatusCode action in the Home controller.
+app.UseStatusCodePagesWithReExecute("/Home/StatusCode/{0}"); 
+
 
 app.UseHttpsRedirection();
 app.UseRouting();

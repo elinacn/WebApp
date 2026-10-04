@@ -1,0 +1,22 @@
+@model Sheet
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container py-4 text-light" data-bs-theme="dark">
+    <h1>@Model.Title</h1>
+
+    <dl class="row">
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.Description)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.Description)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.RowCount)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.RowCount)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.CreatedAt)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.CreatedAt)</dd>
+    </dl>
+
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to list</a>
+</div>

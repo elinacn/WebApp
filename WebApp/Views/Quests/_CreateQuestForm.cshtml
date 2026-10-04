@@ -1,0 +1,90 @@
+@using WebApp.ViewModels
+@model QuestsPageViewModel
+
+<section class="quests-create-panel">
+    <h2 class="quests-heading">Create quest</h2>
+    <p class="quests-create-hint">Saved as a quiz JSON file in Tasks. The quiz id is assigned automatically.</p>
+
+    <form class="quests-create-form" method="post" asp-controller="Quests" asp-action="Create">
+        <input type="hidden" asp-for="NewQuest.QuestType" />
+
+        <div class="quests-create-grid">
+            <label class="quests-create-field">
+                title
+                <input asp-for="NewQuest.Title" />
+            </label>
+            <label class="quests-create-field">
+                difficulty
+                <input asp-for="NewQuest.Difficulty" placeholder="beginner" />
+            </label>
+            <label class="quests-create-field quests-create-field-wide">
+                description
+                <textarea asp-for="NewQuest.Description" rows="3"></textarea>
+            </label>
+        </div>
+
+        <div class="quests-create-q-bar">
+            <h3 class="quests-create-subheading">questions</h3>
+            <button class="quests-reset" type="submit" name="addQuestion" value="1">Add question</button>
+        </div>
+
+        @for (var i = 0; i < Model.NewQuest.Questions.Count; i++)
+        {
+            <fieldset class="quests-create-block">
+                <legend>
+                    Question @(i + 1)
+                    @if (Model.NewQuest.Questions.Count > 1)
+                    {
+                        <button class="quests-remove-q" type="submit" name="removeQuestion" value="@i">Remove</button>
+                    }
+                </legend>
+                <div class="quests-create-grid">
+                    <label class="quests-create-field">
+                        type
+                        <select asp-for="NewQuest.Questions[i].Type">
+                            <option value="multipleChoice">multipleChoice</option>
+                            <option value="freeText">freeText</option>
+                        </select>
+                    </label>
+                    <label class="quests-create-field">
+                        points
+                        <input asp-for="NewQuest.Questions[i].Points" type="number" min="0" />
+                    </label>
+                    <label class="quests-create-field quests-create-field-wide">
+                        text
+                        <textarea asp-for="NewQuest.Questions[i].Text" rows="2"></textarea>
+                    </label>
+                </div>
+
+                <p class="quests-create-label">options</p>
+                <div class="quests-create-grid">
+                    @for (var o = 0; o < Model.NewQuest.Questions[i].Options.Count; o++)
+                    {
+                        <label class="quests-create-field">
+                            @Model.NewQuest.Questions[i].Options[o].Id
+                            <input type="hidden" asp-for="NewQuest.Questions[i].Options[o].Id" />
+                            <input asp-for="NewQuest.Questions[i].Options[o].Text" />
+                        </label>
+                    }
+                    <label class="quests-create-field">
+                        correctOptionId
+                        <input asp-for="NewQuest.Questions[i].CorrectOptionId" placeholder="a" />
+                    </label>
+                    <label class="quests-create-field">
+                        acceptedAnswers
+                        <input asp-for="NewQuest.Questions[i].AcceptedAnswers" placeholder="contains()" />
+                    </label>
+                    <label class="quests-create-field quests-create-field-wide">
+                        explaination
+                        <textarea asp-for="NewQuest.Questions[i].Explaination" rows="2"></textarea>
+                    </label>
+                </div>
+            </fieldset>
+        }
+
+        <div class="quests-create-actions">
+            <button class="quests-apply" type="submit">Save quest</button>
+            <a class="quests-reset" asp-controller="Quests" asp-action="Quests" asp-route-section="library">Cancel</a>
+        </div>
+    </form>
+</section>

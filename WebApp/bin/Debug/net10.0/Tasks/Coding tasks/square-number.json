@@ -1,0 +1,21 @@
+{
+    "id": "5",
+    "title": "Square number.",
+    "description": "Write a method that squares number and returns it.",
+    "difficulty": "beginner",
+    "startCode": "public static int sum(int a) {\n //Your code here\n}",
+    "tests": [
+        {
+            "input": [3],
+            "expected": 9
+        },
+        {
+            "input": [6],
+            "expected": 36
+        },
+        {
+            "input": [-5],
+            "expected": 25
+        }
+    ]
+}
