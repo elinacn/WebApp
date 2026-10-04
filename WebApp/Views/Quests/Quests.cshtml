@@ -40,44 +40,44 @@
 
         @if (Model.ActiveSection == "library")
         {
-            <section class="quests-section">
-                <h2 class="quests-heading">Continue Quest</h2>
-                <div class="quests-row">
-                    @if (Model.ContinueQuests.Count == 0)
-                    {
-                        @for (var i = 0; i < 4; i++)
-                        {
-                            <div class="quest-placeholder"></div>
-                        }
-                    }
-                    else
-                    {
-                        @foreach (var quest in Model.ContinueQuests)
-                        {
-                            <partial name="_QuestCard" model="quest" />
-                        }
-                    }
-                </div>
-            </section>
+            <section class="quests-section" data-bs-theme="dark">
+                <h2 class="quests-heading">My Quests</h2>
 
-            <section class="quests-section">
-                <h2 class="quests-heading">Completed Quest</h2>
-                <div class="quests-row">
-                    @if (Model.CompletedQuests.Count == 0)
-                    {
-                        @for (var i = 0; i < 4; i++)
-                        {
-                            <div class="quest-placeholder"></div>
-                        }
-                    }
-                    else
-                    {
-                        @foreach (var quest in Model.CompletedQuests)
-                        {
-                            <partial name="_QuestCard" model="quest" />
-                        }
-                    }
-                </div>
+                @if (!Model.MyQuests.Any())
+                {
+                    <p>No quests yet.</p>
+                }
+                else
+                {
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Difficulty</th>
+                                <th>Questions</th>
+                                <th>Points</th>
+                                <th>Created</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var quest in Model.MyQuests)
+                            {
+                                <tr>
+                                    <td>@quest.Title</td>
+                                    <td>@quest.Difficulty</td>
+                                    <td>@quest.QuestionCount</td>
+                                    <td>@quest.TotalPoints</td>
+                                    <td>@quest.CreatedAt.ToString("dd'/'MM'/'yyyy")</td>
+                                    <td>
+                                        <a asp-controller="Quests" asp-action="Edit" asp-route-id="@quest.Id">Edit</a> |
+                                        <a asp-controller="Quests" asp-action="Delete" asp-route-id="@quest.Id">Delete</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
             </section>
         }
 

@@ -6,6 +6,7 @@ public class QuestsPageViewModel
     public string ActiveSection { get; set; } = "library";
     public QuestFilterViewModel Filter { get; set; } = new();
     public CreateQuestViewModel NewQuest { get; set; } = new();
+    public List<QuestListItemViewModel> MyQuests { get; set; } = [];
     public List<QuestCardViewModel> ContinueQuests { get; set; } = [];
     public List<QuestCardViewModel> CompletedQuests { get; set; } = [];
     public List<QuestCardViewModel> FeaturedQuests { get; set; } = [];

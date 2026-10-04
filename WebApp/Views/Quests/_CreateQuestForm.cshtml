@@ -1,31 +1,74 @@
 @using WebApp.ViewModels
 @model QuestsPageViewModel
 
-<section class="quests-create-panel">
-    <h2 class="quests-heading">Create quest</h2>
-    <p class="quests-create-hint">Saved as a quiz JSON file in Tasks. The quiz id is assigned automatically.</p>
+@{
+    var isEdit = Model.NewQuest.Id > 0;
+}
 
-    <form class="quests-create-form" method="post" asp-controller="Quests" asp-action="Create">
+<section class="quests-create-panel">
+    @if (Model.MyQuests.Count > 0)
+    {
+        <h2 class="quests-heading">Your quests</h2>
+        <table class="quests-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Difficulty</th>
+                    <th>Questions</th>
+                    <th>Points</th>
+                    <th>Created</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var quest in Model.MyQuests)
+                {
+                    <tr>
+                        <td>@quest.Title</td>
+                        <td>@quest.Difficulty</td>
+                        <td>@quest.QuestionCount</td>
+                        <td>@quest.TotalPoints</td>
+                        <td>@quest.CreatedAt.ToString("dd'/'MM'/'yyyy")</td>
+                        <td>
+                            <a asp-controller="Quests" asp-action="Edit" asp-route-id="@quest.Id">Edit</a> |
+                            <a asp-controller="Quests" asp-action="Delete" asp-route-id="@quest.Id">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <h2 class="quests-heading">@(isEdit ? "Edit quest" : "Create quest")</h2>
+    <p class="quests-create-hint">Saved in the database. The quest id is assigned automatically.</p>
+
+    <form class="quests-create-form" method="post" asp-controller="Quests"
+          asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@(isEdit ? Model.NewQuest.Id : (int?)null)">
+        <div asp-validation-summary="ModelOnly" class="quests-validation"></div>
+        <input type="hidden" asp-for="NewQuest.Id" />
         <input type="hidden" asp-for="NewQuest.QuestType" />
 
         <div class="quests-create-grid">
             <label class="quests-create-field">
                 title
                 <input asp-for="NewQuest.Title" />
+                <span asp-validation-for="NewQuest.Title" class="quests-validation"></span>
             </label>
             <label class="quests-create-field">
                 difficulty
                 <input asp-for="NewQuest.Difficulty" placeholder="beginner" />
+                <span asp-validation-for="NewQuest.Difficulty" class="quests-validation"></span>
             </label>
             <label class="quests-create-field quests-create-field-wide">
                 description
                 <textarea asp-for="NewQuest.Description" rows="3"></textarea>
+                <span asp-validation-for="NewQuest.Description" class="quests-validation"></span>
             </label>
         </div>
 
         <div class="quests-create-q-bar">
             <h3 class="quests-create-subheading">questions</h3>
-            <button class="quests-reset" type="submit" name="addQuestion" value="1">Add question</button>
+            <button class="quests-reset" type="submit" name="addQuestion" value="1" formnovalidate>Add question</button>
         </div>
 
         @for (var i = 0; i < Model.NewQuest.Questions.Count; i++)
@@ -35,7 +78,7 @@
                     Question @(i + 1)
                     @if (Model.NewQuest.Questions.Count > 1)
                     {
-                        <button class="quests-remove-q" type="submit" name="removeQuestion" value="@i">Remove</button>
+                        <button class="quests-remove-q" type="submit" name="removeQuestion" value="@i" formnovalidate>Remove</button>
                     }
                 </legend>
                 <div class="quests-create-grid">
@@ -45,18 +88,22 @@
                             <option value="multipleChoice">multipleChoice</option>
                             <option value="freeText">freeText</option>
                         </select>
+                        <span asp-validation-for="NewQuest.Questions[i].Type" class="quests-validation"></span>
                     </label>
                     <label class="quests-create-field">
                         points
                         <input asp-for="NewQuest.Questions[i].Points" type="number" min="0" />
+                        <span asp-validation-for="NewQuest.Questions[i].Points" class="quests-validation"></span>
                     </label>
                     <label class="quests-create-field quests-create-field-wide">
                         text
-                        <textarea asp-for="NewQuest.Questions[i].Text" rows="2"></textarea>
+                        <textarea asp-for="NewQuest.Questions[i].Question" rows="2"></textarea>
+                        <span asp-validation-for="NewQuest.Questions[i].Question" class="quests-validation"></span>
                     </label>
                 </div>
 
                 <p class="quests-create-label">options</p>
+                <span asp-validation-for="NewQuest.Questions[i].Options" class="quests-validation"></span>
                 <div class="quests-create-grid">
                     @for (var o = 0; o < Model.NewQuest.Questions[i].Options.Count; o++)
                     {
@@ -69,10 +116,12 @@
                     <label class="quests-create-field">
                         correctOptionId
                         <input asp-for="NewQuest.Questions[i].CorrectOptionId" placeholder="a" />
+                        <span asp-validation-for="NewQuest.Questions[i].CorrectOptionId" class="quests-validation"></span>
                     </label>
                     <label class="quests-create-field">
                         acceptedAnswers
                         <input asp-for="NewQuest.Questions[i].AcceptedAnswers" placeholder="contains()" />
+                        <span asp-validation-for="NewQuest.Questions[i].AcceptedAnswers" class="quests-validation"></span>
                     </label>
                     <label class="quests-create-field quests-create-field-wide">
                         explaination
@@ -84,7 +133,7 @@
 
         <div class="quests-create-actions">
             <button class="quests-apply" type="submit">Save quest</button>
-            <a class="quests-reset" asp-controller="Quests" asp-action="Quests" asp-route-section="library">Cancel</a>
+            <a class="quests-reset" asp-controller="Quests" asp-action="Quests" asp-route-section="@(isEdit ? "create" : "library")">Cancel</a>
         </div>
     </form>
 </section>
