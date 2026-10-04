@@ -12,6 +12,10 @@ builder.Services.AddDbContext<WebApp.Models.SheetsDbContext>(options =>
 
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.GetRequiredService<SheetsDbContext>().Database.Migrate();
+}
 
 // This middleware will handle exceptions and redirect to the    
 // Error action in the Home controller as long as the application is not in development mode.
