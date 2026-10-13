@@ -3,7 +3,7 @@
 }
 
 @* Placeholder data until we can connect the stuff together. *@
-<link rel="stylesheet" href="@Url.Content("~/profile.css")" />
+<link rel="stylesheet" href="~/css/profile.css" asp-append-version="true" />
 
 <main class="profile-container">
     <div class="profile-title-bar">
@@ -12,11 +12,11 @@
     </div>
 
     <section class="profile-header">
-        <div class="profile-avatar">JN</div>
+        <div class="profile-avatar">PN</div>
         <div class="profile-user-details">
             <p class="profile-label">Your learning journey</p>
-            <h2 id="profile-name">Johan</h2>
-            <p class="profile-username">@("@johan")</p>
+            <h2 id="profile-name">Profile name</h2>
+            <p class="profile-username">@("@ProfileName")</p>
             <p class="profile-bio">I love questions!</p>
         </div>
         <div class="profile-streak">
@@ -44,15 +44,12 @@
         <h2 id="profile-achievements-title">Achievements</h2>
         <div class="profile-achievement-grid">
             <article class="profile-achievement-card">
-                <span class="profile-badge">✓</span>
                 <h3>First quest</h3><p>Complete your first quiz.</p>
             </article>
             <article class="profile-achievement-card">
-                <span class="profile-badge profile-badge-gold">ϟ</span>
                 <h3>On a roll</h3><p>Build a 5 day streak.</p>
             </article>
             <article class="profile-achievement-card">
-                <span class="profile-badge">☆</span>
                 <h3>Level up</h3><p>Reach level 2.</p>
             </article>
         </div>

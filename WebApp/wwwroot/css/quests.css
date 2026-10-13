@@ -1,0 +1,370 @@
+.quests-page {
+  display: flex;
+  align-items: stretch;
+  min-height: calc(100vh - 75px - 80px);
+  background-color: #111827;
+  color: #ffffff;
+  padding: 24px 24px 40px 12px;
+  box-sizing: border-box;
+  gap: 8px;
+}
+
+.quests-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px 8px 8px;
+}
+
+.quests-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: #e5e7eb;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.quests-nav-item:hover {
+  color: #ffffff;
+  background-color: rgba(139, 92, 246, 0.2);
+}
+
+.quests-nav-item.is-active {
+  background-color: #8B5CF6;
+  color: #ffffff;
+}
+
+.quests-nav-icon {
+  flex-shrink: 0;
+}
+
+.quests-sidebar-divider {
+  border: 0;
+  border-top: 1px solid #374151;
+  margin: 10px 8px;
+}
+
+.quests-main {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 16px 0 24px;
+}
+
+.quests-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.quests-search,
+.quests-difficulty {
+  background-color: #1f2937;
+  color: #ffffff;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+}
+
+.quests-search {
+  min-width: 220px;
+  flex: 1;
+  max-width: 320px;
+}
+
+.quests-difficulty {
+  min-width: 160px;
+}
+
+.quests-apply,
+.quests-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.quests-apply {
+  background-color: #6366F1;
+  color: #ffffff;
+}
+
+.quests-apply:hover {
+  background-color: #4f46e5;
+}
+
+.quests-reset {
+  background-color: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #374151;
+}
+
+.quests-reset:hover {
+  background-color: #111827;
+  color: #ffffff;
+}
+
+.quests-create-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  background-color: #8B5CF6;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.quests-create-btn:hover,
+.quests-create-btn.is-active {
+  background-color: #7c3aed;
+  color: #ffffff;
+}
+
+.quests-create-panel {
+  max-width: 760px;
+  padding-bottom: 48px;
+}
+
+.quests-create-hint {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  margin: -8px 0 16px;
+}
+
+.quests-create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.quests-create-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px 16px;
+}
+
+.quests-create-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #d1d5db;
+}
+
+.quests-create-field-wide {
+  grid-column: 1 / -1;
+}
+
+.quests-create-field input,
+.quests-create-field select,
+.quests-create-field textarea {
+  background-color: #111827;
+  color: #ffffff;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.quests-create-q-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quests-create-q-bar .quests-create-subheading {
+  margin: 0;
+}
+
+.quests-create-subheading,
+.quests-create-label {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #c4b5fd;
+}
+
+.quests-create-block {
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 12px 14px 16px;
+  margin: 0;
+}
+
+.quests-create-block legend {
+  padding: 0 6px;
+  color: #e5e7eb;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quests-remove-q {
+  background: transparent;
+  border: 1px solid #4b5563;
+  color: #e5e7eb;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.quests-remove-q:hover {
+  border-color: #f87171;
+  color: #fca5a5;
+}
+
+.quests-create-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.quests-section {
+  margin-bottom: 36px;
+}
+
+.quests-heading {
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+
+.quests-row,
+.quests-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  max-width: 760px;
+}
+
+.quest-placeholder,
+.quest-card {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  min-height: 120px;
+}
+
+.quest-placeholder {
+  background-color: #d1d5db;
+}
+
+.quest-card {
+  position: relative;
+  background-color: #d1d5db;
+  color: #111827;
+  padding: 16px 14px 12px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quest-save-form {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  margin: 0;
+}
+
+.quest-save-btn {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #4b5563;
+}
+
+.quest-save-btn.is-saved {
+  color: #8B5CF6;
+}
+
+.quest-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0 28px 0 0;
+}
+
+.quest-card-code,
+.quest-card-meta,
+.quest-card-status,
+.quest-card-progress {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.quest-card-code {
+  color: #4b5563;
+}
+
+.quest-progress {
+  margin-top: auto;
+  height: 6px;
+  background-color: #9ca3af;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.quest-progress-fill {
+  display: block;
+  height: 100%;
+  background-color: #6366F1;
+}
+
+@media (max-width: 900px) {
+  .quests-row,
+  .quests-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .quests-page {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .quests-sidebar {
+    width: 100%;
+  }
+
+  .quests-main {
+    padding: 16px 0 0;
+  }
+
+  .quests-row,
+  .quests-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

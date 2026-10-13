@@ -20,6 +20,7 @@
                     <li><a class="nav-item-link" asp-controller="Quests" asp-action="Quests">Quests</a></li>
                     <li><a class="nav-item-link" asp-controller="Leaderboard" asp-action="Leaderboard">Leaderboard</a></li>
                     <li><a class="nav-item-link" asp-controller="Profile" asp-action="Profile">Profile</a></li>
+                    <li><a class="nav-item-link" asp-controller="Sheets" asp-action="Index">Sheets</a></li>
                 </ul>
             </nav>
 
@@ -29,6 +30,14 @@
 
     <div class="main-content-wrapper">
         <main role="main">
+            @if (TempData["Success"] is string success)
+            {
+                <div class="container pt-3"><div class="alert alert-success mb-0" role="status">@success</div></div>
+            }
+            @if (TempData["Error"] is string error)
+            {
+                <div class="container pt-3"><div class="alert alert-danger mb-0" role="alert">@error</div></div>
+            }
             @RenderBody()
         </main>
     </div>

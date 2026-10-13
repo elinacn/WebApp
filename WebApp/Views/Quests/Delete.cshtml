@@ -1,0 +1,32 @@
+@model Quest
+@{
+    ViewData["Title"] = "Delete quest";
+}
+
+<div class="container py-4 text-light" data-bs-theme="dark">
+    <h1>Delete quest</h1>
+    <p class="text-danger">Are you sure you want to delete this quest? All of its questions will be deleted too.</p>
+
+    <dl class="row">
+        <dt class="col-sm-3">Title</dt>
+        <dd class="col-sm-9">@Model.Title</dd>
+
+        <dt class="col-sm-3">Description</dt>
+        <dd class="col-sm-9">@Model.Description</dd>
+
+        <dt class="col-sm-3">Difficulty</dt>
+        <dd class="col-sm-9">@Model.Difficulty</dd>
+
+        <dt class="col-sm-3">Questions</dt>
+        <dd class="col-sm-9">@Model.Questions.Count</dd>
+
+        <dt class="col-sm-3">Created</dt>
+        <dd class="col-sm-9">@Model.CreatedAt.ToString("dd'/'MM'/'yyyy")</dd>
+    </dl>
+
+    <form asp-controller="Quests" asp-action="Delete" method="post">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a asp-controller="Quests" asp-action="Quests" asp-route-section="library" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>

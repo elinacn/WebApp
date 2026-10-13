@@ -1,0 +1,21 @@
+{
+    "id": "8",
+    "title": "Minutes to seconds",
+    "description": "Write a method that takes in minutes and returns it in seconds.",
+    "difficulty": "beginner",
+    "startCode": "public static double minutesInSeconds(int minutes) {\n //Your code here\n}",
+    "tests": [
+        {
+            "input": [5],
+            "expected": 300
+        },
+        {
+            "input": [2],
+            "expected": 120
+        },
+        {
+            "input": [3.5],
+            "expected": 210
+        }
+    ]
+}

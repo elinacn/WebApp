@@ -1,0 +1,21 @@
+{
+    "id": "1",
+    "title": "Sum Two Numbers",
+    "description": "Write a method that takes in and returns the sum of two integers.",
+    "difficulty": "beginner",
+    "startCode": "public static int sum(int a, int b) {\n //Your code here\n}",
+    "tests": [
+        {
+            "input": [1, 5],
+            "expected": 6
+        },
+        {
+            "input": [-10, 2],
+            "expected": -8
+        },
+        {
+            "input": [-2, -3],
+            "expected": -5
+        }
+    ]
+}
