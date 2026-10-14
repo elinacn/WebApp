@@ -44,7 +44,8 @@ public class UsersController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Username,Name,Course,CreatedAt,Points,QuizzesCompleted")] User user)
+    // Points and QuizzesCompleted are left out on purpose: they come from quiz results, not this form
+    public async Task<IActionResult> Create([Bind("Username,Name,Course,CreatedAt")] User user)
     {
         // Custom server-side rule on top of the data annotations
         if (await _context.Users.AnyAsync(u => u.Username == user.Username))
@@ -78,7 +79,7 @@ public class UsersController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,Username,Name,Course,CreatedAt,Points,QuizzesCompleted")] User user)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Username,Name,Course,CreatedAt")] User user)
     {
         if (id != user.Id) return BadRequest();
 
@@ -87,9 +88,18 @@ public class UsersController : Controller
 
         if (!ModelState.IsValid) return View(user);
 
+        // Copy only the editable fields onto the stored user, so Points and
+        // QuizzesCompleted keep their values instead of being reset to 0
+        var existing = await _context.Users.FindAsync(id);
+        if (existing is null) return NotFound();
+
+        existing.Username = user.Username;
+        existing.Name = user.Name;
+        existing.Course = user.Course;
+        existing.CreatedAt = user.CreatedAt;
+
         try
         {
-            _context.Update(user);
             await _context.SaveChangesAsync();
             _logger.LogInformation("Updated user {UserId}", id);
             TempData["Success"] = "User updated.";
