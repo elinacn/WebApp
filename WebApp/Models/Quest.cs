@@ -19,5 +19,9 @@ public class Quest
 
     public DateTime CreatedAt { get; set; } = DateTime.Today;
 
+    // Optional for now: the create-quest form doesn't ask for a course yet
+    public int? CourseId { get; set; }
+    public Course? Course { get; set; }
+
     public List<QuestQuestion> Questions { get; set; } = [];
 }

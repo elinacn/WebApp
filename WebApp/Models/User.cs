@@ -15,9 +15,12 @@ public class User
     [StringLength(50, ErrorMessage = "Name can be at most 50 characters.")]
     public string Name { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Course is required.")]
-    [StringLength(100, ErrorMessage = "Course can be at most 100 characters.")]
-    public string Course { get; set; } = string.Empty;
+    // The educational program the student belongs to (e.g. "Web programming").
+    // Not the same thing as a Course on this site, which groups quests.
+    [Required(ErrorMessage = "Program is required.")]
+    [StringLength(100, ErrorMessage = "Program can be at most 100 characters.")]
+    [Display(Name = "Program")]
+    public string StudyProgram { get; set; } = string.Empty;
 
     [DataType(DataType.Date)]
     [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}")]

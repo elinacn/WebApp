@@ -16,28 +16,28 @@ public class LeaderboardController : Controller
 
     public IActionResult Index() => RedirectToAction(nameof(Leaderboard));
 
-    public async Task<IActionResult> Leaderboard(string? search, string? course)
+    public async Task<IActionResult> Leaderboard(string? search, string? program)
     {
         var model = new LeaderboardViewModel
         {
             Search = search?.Trim() ?? string.Empty,
-            Course = course?.Trim() ?? string.Empty,
-            Courses = await _context.Users.AsNoTracking()
-                .Select(u => u.Course)
+            Program = program?.Trim() ?? string.Empty,
+            Programs = await _context.Users.AsNoTracking()
+                .Select(u => u.StudyProgram)
                 .Distinct()
                 .OrderBy(c => c)
                 .ToListAsync()
         };
 
-        // Rank the selected course before searching so a name search keeps its rank.
+        // Rank the selected program before searching so a name search keeps its rank.
         var ranked = await _context.Users.AsNoTracking()
-            .Where(u => model.Course.Length == 0 || u.Course == model.Course)
+            .Where(u => model.Program.Length == 0 || u.StudyProgram == model.Program)
             .OrderByDescending(u => u.Points)
             .ThenBy(u => u.Name)
             .Select(u => new LeaderboardEntryViewModel
             {
                 Name = u.Name,
-                Course = u.Course,
+                Program = u.StudyProgram,
                 Points = u.Points,
                 QuizzesCompleted = u.QuizzesCompleted
             })

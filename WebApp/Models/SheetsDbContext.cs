@@ -16,6 +16,7 @@ namespace WebApp.Models
 
         // For user management
         public DbSet<User> Users { get; set; }
+        public DbSet<Course> Courses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -23,6 +24,12 @@ namespace WebApp.Models
         modelBuilder.Entity<Sheet>().HasIndex(s => s.Title).IsUnique();
         modelBuilder.Entity<Quest>().HasIndex(q => q.Title).IsUnique();
         modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
+        modelBuilder.Entity<Course>().HasIndex(c => c.Code).IsUnique();
+
+        // Deleting a course unlinks its quests instead of deleting them
+        modelBuilder.Entity<Quest>()
+            .HasOne(q => q.Course).WithMany(c => c.Quests)
+            .HasForeignKey(q => q.CourseId).OnDelete(DeleteBehavior.SetNull);
     }
     }
 }

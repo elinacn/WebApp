@@ -45,7 +45,7 @@ public class UsersController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     // Points and QuizzesCompleted are left out on purpose: they come from quiz results, not this form
-    public async Task<IActionResult> Create([Bind("Username,Name,Course,CreatedAt")] User user)
+    public async Task<IActionResult> Create([Bind("Username,Name,StudyProgram,CreatedAt")] User user)
     {
         // Custom server-side rule on top of the data annotations
         if (await _context.Users.AnyAsync(u => u.Username == user.Username))
@@ -79,7 +79,7 @@ public class UsersController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,Username,Name,Course,CreatedAt")] User user)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Username,Name,StudyProgram,CreatedAt")] User user)
     {
         if (id != user.Id) return BadRequest();
 
@@ -95,7 +95,7 @@ public class UsersController : Controller
 
         existing.Username = user.Username;
         existing.Name = user.Name;
-        existing.Course = user.Course;
+        existing.StudyProgram = user.StudyProgram;
         existing.CreatedAt = user.CreatedAt;
 
         try
