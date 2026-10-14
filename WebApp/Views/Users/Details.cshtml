@@ -1,0 +1,31 @@
+@model User
+@{
+    ViewData["Title"] = Model.Username;
+}
+
+<div class="container py-4 text-light" data-bs-theme="dark">
+    <h1>@Model.Username</h1>
+
+    <dl class="row">
+        <dt class="col-sm-3">ID</dt>
+        <dd class="col-sm-9">@Model.Id</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.Name)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.Name)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.Course)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.Course)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.Points)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.Points)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.QuizzesCompleted)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.QuizzesCompleted)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.CreatedAt)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.CreatedAt)</dd>
+    </dl>
+
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to list</a>
+</div>

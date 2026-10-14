@@ -14,7 +14,9 @@ builder.Services.AddDbContext<WebApp.Models.SheetsDbContext>(options =>
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
-    scope.ServiceProvider.GetRequiredService<SheetsDbContext>().Database.Migrate();
+    var context = scope.ServiceProvider.GetRequiredService<SheetsDbContext>();
+    context.Database.Migrate();
+    UserSeeder.Seed(context, app.Logger);
 }
 
 // This middleware will handle exceptions and redirect to the    

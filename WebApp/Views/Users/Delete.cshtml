@@ -1,0 +1,38 @@
+@model User
+@{
+    ViewData["Title"] = "Delete user";
+}
+
+<div class="container py-4 text-light" data-bs-theme="dark">
+    <h1>Delete user</h1>
+    <p class="text-danger">Are you sure you want to delete this user?</p>
+
+    <dl class="row">
+        <dt class="col-sm-3">ID</dt>
+        <dd class="col-sm-9">@Model.Id</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.Username)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.Username)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.Name)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.Name)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.Course)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.Course)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.Points)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.Points)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.QuizzesCompleted)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.QuizzesCompleted)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.CreatedAt)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.CreatedAt)</dd>
+    </dl>
+
+    <form asp-action="Delete" method="post">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>

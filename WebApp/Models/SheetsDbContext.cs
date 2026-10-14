@@ -14,11 +14,15 @@ namespace WebApp.Models
         public DbSet<QuestQuestion> QuestQuestions { get; set; }
         public DbSet<QuestOption> QuestOptions { get; set; }
 
+        // For user management
+        public DbSet<User> Users { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Enforce unique titles at the database level too
         modelBuilder.Entity<Sheet>().HasIndex(s => s.Title).IsUnique();
         modelBuilder.Entity<Quest>().HasIndex(q => q.Title).IsUnique();
+        modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
     }
     }
 }

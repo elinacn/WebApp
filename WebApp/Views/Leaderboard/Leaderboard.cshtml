@@ -11,7 +11,6 @@
             <h1>Leaderboard</h1>
             <p>See how learners are progressing through their quizzes.</p>
         </div>
-        <span class="leaderboard-sample">Sample rankings</span>
     </header>
 
     <form class="leaderboard-filters" asp-controller="Leaderboard" asp-action="Leaderboard" method="get">
@@ -38,7 +37,14 @@
             <h2>@(string.IsNullOrEmpty(Model.Course) ? "Overall rankings" : Model.Course)</h2>
             <span>@Model.Entries.Count student(s)</span>
         </div>
-        @if (Model.Entries.Count == 0)
+        @if (Model.Courses.Count == 0)
+        {
+            <div class="leaderboard-empty">
+                <h3>No students yet</h3>
+                <p>Students appear here once they are added under <a asp-controller="Users" asp-action="Index">Users</a>.</p>
+            </div>
+        }
+        else if (Model.Entries.Count == 0)
         {
             <div class="leaderboard-empty">
                 <h3>No students found</h3>
@@ -49,7 +55,7 @@
         {
             <div class="leaderboard-table-wrapper">
                 <table class="leaderboard-table">
-                    <caption>Sample students ranked by total points, highest first.</caption>
+                    <caption>Students ranked by total points, highest first.</caption>
                     <thead>
                         <tr><th scope="col">Rank</th><th scope="col">Student</th><th scope="col">Course</th><th scope="col">Quizzes completed</th><th scope="col">Points</th></tr>
                     </thead>
@@ -69,5 +75,4 @@
             </div>
         }
     </section>
-    <p class="leaderboard-note">These names and scores are demonstration data. Real quiz results will be connected later.</p>
 </div>
