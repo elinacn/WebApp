@@ -266,18 +266,10 @@
   max-width: 760px;
 }
 
-.quest-placeholder,
 .quest-card {
   aspect-ratio: 1;
   border-radius: 4px;
   min-height: 120px;
-}
-
-.quest-placeholder {
-  background-color: #d1d5db;
-}
-
-.quest-card {
   position: relative;
   background-color: #d1d5db;
   color: #111827;
@@ -325,6 +317,23 @@
 
 .quest-card-code {
   color: #4b5563;
+}
+
+.quest-card-actions {
+  margin-top: auto;
+  display: flex;
+  gap: 12px;
+  font-size: 0.8rem;
+}
+
+.quest-card-actions a {
+  color: #4c1d95;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.quest-card-actions a:hover {
+  text-decoration: underline;
 }
 
 .quest-progress {
