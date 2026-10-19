@@ -56,7 +56,13 @@
             </label>
             <label class="quests-create-field">
                 difficulty
-                <input asp-for="NewQuest.Difficulty" placeholder="beginner" />
+                <select asp-for="NewQuest.Difficulty">
+                    <option value="">Select difficulty</option>
+                    @foreach (var level in Enum.GetNames<WebApp.Models.Difficulty>())
+                    {
+                        <option value="@level">@level</option>
+                    }
+                </select>
                 <span asp-validation-for="NewQuest.Difficulty" class="quests-validation"></span>
             </label>
             <label class="quests-create-field quests-create-field-wide">

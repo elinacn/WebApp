@@ -64,7 +64,7 @@ public class QuestsController : Controller
 
         if (section == "create" || section == "library")
         {
-            model.MyQuests = await LoadMyQuestsAsync(section == "library" ? searchText : null);
+            model.MyQuests = await LoadMyQuestsAsync(section == "library" ? filter : null);
         }
 
         return View(model);
@@ -218,13 +218,20 @@ public class QuestsController : Controller
         });
     }
 
-    private async Task<List<QuestListItemViewModel>> LoadMyQuestsAsync(string? searchText = null)
+    private async Task<List<QuestListItemViewModel>> LoadMyQuestsAsync(QuestFilterViewModel? filter = null)
     {
         var query = _context.Quests.AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(searchText))
+        if (!string.IsNullOrWhiteSpace(filter?.SearchText))
         {
-            query = query.Where(q => EF.Functions.Like(q.Title, $"%{searchText}%"));
+            var text = filter.SearchText;
+            query = query.Where(q => EF.Functions.Like(q.Title, $"%{text}%"));
+        }
+
+        if (filter?.Difficulty is Difficulty level)
+        {
+            var levelName = level.ToString();
+            query = query.Where(q => EF.Functions.Like(q.Difficulty, levelName));
         }
 
         return await query
