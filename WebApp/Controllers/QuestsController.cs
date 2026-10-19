@@ -270,8 +270,14 @@ public class QuestsController : Controller
         }
     }
 
-        private void ValidateQuest(CreateQuestViewModel newQuest)
+    private void ValidateQuest(CreateQuestViewModel newQuest)
     {
+        var chosen = (newQuest.Difficulty ?? string.Empty).Trim();
+        if (!Enum.GetNames<Difficulty>().Contains(chosen, StringComparer.OrdinalIgnoreCase))
+        {
+            ModelState.AddModelError("NewQuest.Difficulty", "Choose a difficulty.");
+        }
+        
         for (var i = 0; i < newQuest.Questions.Count; i++)
         {
             var question = newQuest.Questions[i];

@@ -56,7 +56,7 @@
             </label>
             <label class="quests-create-field">
                 difficulty
-                <select asp-for="NewQuest.Difficulty">
+                <select asp-for="NewQuest.Difficulty" id="quest-difficulty">
                     <option value="">Select difficulty</option>
                     @foreach (var level in Enum.GetNames<WebApp.Models.Difficulty>())
                     {
@@ -142,4 +142,44 @@
             <a class="quests-reset" asp-controller="Quests" asp-action="Quests" asp-route-section="@(isEdit ? "create" : "library")">Cancel</a>
         </div>
     </form>
+    
+    <dialog id="difficulty-dialog" class="quests-dialog">
+        <h3>Difficulty not selected</h3>
+        <p>You need to choose a difficulty before the quest can be saved.</p>
+        <div class="quests-create-actions">
+            <button type="button" class="quests-apply" id="difficulty-keep">Keep editing</button>
+            <button type="button" class="quests-reset" id="difficulty-cancel"
+                    data-cancel-url="@Url.Action("Quests", "Quests", new { section = isEdit ? "create" : "library" })">
+                Cancel quest
+            </button>
+        </div>
+    </dialog>
+
+    <script>
+        (function () {
+            const form = document.querySelector(".quests-create-form");
+            const select = document.getElementById("quest-difficulty");
+            const dialog = document.getElementById("difficulty-dialog");
+
+            form.addEventListener("submit", function (e) {
+                // Let the "add question" / "remove question" buttons through
+                const name = e.submitter ? e.submitter.name : "";
+                if (name === "addQuestion" || name === "removeQuestion") return;
+
+                if (!select.value) {
+                    e.preventDefault();
+                    dialog.showModal();
+                }
+            });
+
+            document.getElementById("difficulty-keep").addEventListener("click", function () {
+                dialog.close();
+                select.focus();
+            });
+
+            document.getElementById("difficulty-cancel").addEventListener("click", function () {
+                window.location.href = this.dataset.cancelUrl;
+            });
+        })();
+    </script>
 </section>
