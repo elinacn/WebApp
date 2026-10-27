@@ -58,12 +58,13 @@ public class QuestsController : Controller
             CompletedQuests = LoadCompletedQuests(filter),
             FeaturedQuests = LoadFeaturedQuests(filter),
             RecommendedQuests = LoadRecommendedQuests(filter),
+            ExploreQuests = section == "explore" ? await LoadExploreQuestsAsync(filter) : [],
             SavedQuests = LoadSavedQuests(filter)
         };
 
         if (section == "create" || section == "library")
         {
-            model.MyQuests = await LoadMyQuestsAsync(section == "library" ? searchText : null);
+            model.MyQuests = await LoadMyQuestsAsync(section == "library" ? filter : null);
         }
 
         return View(model);
@@ -217,13 +218,20 @@ public class QuestsController : Controller
         });
     }
 
-    private async Task<List<QuestListItemViewModel>> LoadMyQuestsAsync(string? searchText = null)
+    private async Task<List<QuestListItemViewModel>> LoadMyQuestsAsync(QuestFilterViewModel? filter = null)
     {
         var query = _context.Quests.AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(searchText))
+        if (!string.IsNullOrWhiteSpace(filter?.SearchText))
         {
-            query = query.Where(q => EF.Functions.Like(q.Title, $"%{searchText}%"));
+            var text = filter.SearchText;
+            query = query.Where(q => EF.Functions.Like(q.Title, $"%{text}%"));
+        }
+
+        if (filter?.Difficulty is Difficulty level)
+        {
+            var levelName = level.ToString();
+            query = query.Where(q => EF.Functions.Like(q.Difficulty, levelName));
         }
 
         return await query
@@ -239,6 +247,7 @@ public class QuestsController : Controller
         })
         .ToListAsync();
     }
+    
 
     private static void PrepareQuestions(CreateQuestViewModel newQuest)
     {
@@ -261,8 +270,14 @@ public class QuestsController : Controller
         }
     }
 
-        private void ValidateQuest(CreateQuestViewModel newQuest)
+    private void ValidateQuest(CreateQuestViewModel newQuest)
     {
+        var chosen = (newQuest.Difficulty ?? string.Empty).Trim();
+        if (!Enum.GetNames<Difficulty>().Contains(chosen, StringComparer.OrdinalIgnoreCase))
+        {
+            ModelState.AddModelError("NewQuest.Difficulty", "Choose a difficulty.");
+        }
+        
         for (var i = 0; i < newQuest.Questions.Count; i++)
         {
             var question = newQuest.Questions[i];
@@ -363,6 +378,36 @@ public class QuestsController : Controller
             })
             .ToList()
     };
+
+        private async Task<List<QuestCardViewModel>> LoadExploreQuestsAsync(QuestFilterViewModel filter)
+    {
+        var query = _context.Quests.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(filter.SearchText))
+        {
+            query = query.Where(q => EF.Functions.Like(q.Title, $"%{filter.SearchText}%"));
+        }
+
+        if (filter.Difficulty is Difficulty level)
+        {
+            var levelName = level.ToString();
+            query = query.Where(q => EF.Functions.Like(q.Difficulty, levelName));
+        }
+
+        return await query
+            .OrderByDescending(q => q.CreatedAt)
+            .ThenBy(q => q.Title)
+            .Select(q => new QuestCardViewModel
+            {
+                Id = q.Id,
+                Title = q.Title,
+                DifficultyLabel = q.Difficulty,
+                Points = q.Questions.Sum(x => (int?)x.Points) ?? 0,
+                Status = QuestStatus.NotStarted
+            })
+            .ToListAsync();
+    }
+
     private List<QuestCardViewModel> LoadContinueQuests(QuestFilterViewModel filter)
     {
         // DATABASE HOOK: connect the database here. 
@@ -392,4 +437,6 @@ public class QuestsController : Controller
         // DATABASE HOOK: connect the database here. 
         return [];
     }
+
+    
 }

@@ -8,6 +8,7 @@ public class QuestCardViewModel
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public string CourseCode { get; set; } = string.Empty;
+    public string DifficultyLabel { get; set; } = string.Empty;
     public Difficulty Difficulty { get; set; }
     public int Points { get; set; }
     public QuestStatus Status { get; set; }
