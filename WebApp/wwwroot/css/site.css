@@ -311,3 +311,64 @@ body {
 svg {
   color: white;
 }
+
+.navbar-auth {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-login-btn, .navbar-register-btn {
+  background-color: #ffffff;
+  color: #6366F1;
+  padding: 8px 18px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.navbar-login-btn:hover, .navbar-register-btn:hover {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.profile-dropdown-toggle {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.profile-avatar-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: border-color 0.2s ease;
+}
+
+.profile-avatar-img:hover {
+  border-color: #ffffff;
+}
+
+.custom-dropdown-menu {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  padding: 8px 0;
+  margin-top: 10px !important;
+}
+
+.custom-dropdown-menu .dropdown-item {
+  color: #f8fafc;
+  font-size: 0.9rem;
+  padding: 8px 16px;
+  transition: background-color 0.15s ease;
+}
+
+.custom-dropdown-menu .dropdown-item:hover {
+  background-color: #334155;
+  color: #ffffff;
+}
+
