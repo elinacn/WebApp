@@ -151,35 +151,6 @@ namespace WebApp.Migrations
                     b.ToTable("QuestQuestions");
                 });
 
-            modelBuilder.Entity("WebApp.Models.Sheet", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("RowCount")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Title")
-                        .IsUnique();
-
-                    b.ToTable("Sheets");
-                });
-
             modelBuilder.Entity("WebApp.Models.User", b =>
                 {
                     b.Property<int>("Id")

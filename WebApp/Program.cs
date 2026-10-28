@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using WebApp.Extensions;
 using WebApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +12,27 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<WebApp.Models.SheetsDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SheetsDBContextConnection")));
+
+// Sign-in: a login cookie identifies the user on every request (see AccountController)
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";   // where [Authorize] sends anonymous visitors
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+
+        // Sign out anyone whose user has been deleted since they signed in
+        options.Events.OnValidatePrincipal = async context =>
+        {
+            var userId = context.Principal?.GetUserId();
+            var db = context.HttpContext.RequestServices.GetRequiredService<SheetsDbContext>();
+            if (userId is null || !await db.Users.AnyAsync(u => u.Id == userId))
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            }
+        };
+    });
 
 
 var app = builder.Build();
@@ -36,6 +60,7 @@ app.UseStatusCodePagesWithReExecute("/Home/StatusCode/{0}");
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();   // reads the login cookie; must come before UseAuthorization
 app.UseAuthorization();
 
 app.MapStaticAssets();

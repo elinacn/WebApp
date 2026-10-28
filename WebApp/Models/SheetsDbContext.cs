@@ -7,7 +7,6 @@ namespace WebApp.Models
         public SheetsDbContext(DbContextOptions<SheetsDbContext> options) : base(options)
         {
         }
-        public DbSet<Sheet> Sheets { get; set; }
 
         // For creating quests
         public DbSet<Quest> Quests { get; set; }
@@ -21,7 +20,6 @@ namespace WebApp.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Enforce unique titles at the database level too
-        modelBuilder.Entity<Sheet>().HasIndex(s => s.Title).IsUnique();
         modelBuilder.Entity<Quest>().HasIndex(q => q.Title).IsUnique();
         modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
         modelBuilder.Entity<Course>().HasIndex(c => c.Code).IsUnique();

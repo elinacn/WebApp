@@ -20,13 +20,25 @@
                     <li><a class="nav-item-link" asp-controller="Quests" asp-action="Quests">Quests</a></li>
                     <li><a class="nav-item-link" asp-controller="Leaderboard" asp-action="Leaderboard">Leaderboard</a></li>
                     <li><a class="nav-item-link" asp-controller="Profile" asp-action="Profile">Profile</a></li>
-                    <li><a class="nav-item-link" asp-controller="Sheets" asp-action="Index">Sheets</a></li>
                     <li><a class="nav-item-link" asp-controller="Users" asp-action="Index">Users</a></li>
                     <li><a class="nav-item-link" asp-controller="Courses" asp-action="Index">Courses</a></li>
                 </ul>
             </nav>
 
-        <a class="navbar-logo" asp-controller="Home" asp-action="Index">Logo</a>
+        <div class="navbar-account">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <span class="navbar-user">Signed in as <strong>@User.Identity.Name</strong></span>
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="nav-item-link navbar-signout">Sign out</button>
+                </form>
+            }
+            else
+            {
+                <a class="nav-item-link" asp-controller="Account" asp-action="Login">Sign in</a>
+            }
+            <a class="navbar-logo" asp-controller="Home" asp-action="Index">Logo</a>
+        </div>
        </div>
     </header>
 

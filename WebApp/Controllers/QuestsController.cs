@@ -103,8 +103,19 @@ public class QuestsController : Controller
 
         var quest = new Quest { CreatedAt = DateTime.Today };
         ApplyToEntity(quest, newQuest);
-        _context.Quests.Add(quest);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            _context.Quests.Add(quest);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Created quest {QuestId} ({Title}) with {QuestionCount} questions", quest.Id, quest.Title, quest.Questions.Count);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Failed to create quest {Title}", quest.Title);
+            ModelState.AddModelError(string.Empty, "Could not save the quest. Please try again.");
+            return await CreateFormAsync(newQuest, clearModelState: false);
+        }
 
         TempData["Success"] = "Quest created.";
         return RedirectToAction(nameof(Quests), new { section = "create" });
@@ -119,7 +130,11 @@ public class QuestsController : Controller
             .AsNoTracking()
             .Include(q => q.Questions).ThenInclude(q => q.Options)
             .FirstOrDefaultAsync(q => q.Id == id);
-        if (quest is null) return NotFound();
+        if (quest is null)
+        {
+            _logger.LogWarning("Quest {QuestId} not found for editing", id);
+            return NotFound();
+        }
 
         var newQuest = ToViewModel(quest);
         PrepareQuestions(newQuest);
@@ -151,13 +166,36 @@ public class QuestsController : Controller
         var quest = await _context.Quests
             .Include(q => q.Questions).ThenInclude(q => q.Options)
             .FirstOrDefaultAsync(q => q.Id == id);
-        if (quest is null) return NotFound();
+        if (quest is null)
+        {
+            _logger.LogWarning("Quest {QuestId} not found for saving", id);
+            return NotFound();
+        }
 
         // Replace the old questions/options with what was posted
         _context.QuestQuestions.RemoveRange(quest.Questions);
         quest.Questions.Clear();
         ApplyToEntity(quest, newQuest);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Updated quest {QuestId} ({Title})", id, quest.Title);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            // Someone deleted the quest while this edit was open
+            if (!await _context.Quests.AnyAsync(q => q.Id == id)) return NotFound();
+            _logger.LogError(ex, "Concurrency conflict updating quest {QuestId}", id);
+            ModelState.AddModelError(string.Empty, "This quest was changed elsewhere. Reload and try again.");
+            return await CreateFormAsync(newQuest, clearModelState: false);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Failed to update quest {QuestId}", id);
+            ModelState.AddModelError(string.Empty, "Could not save the quest. Please try again.");
+            return await CreateFormAsync(newQuest, clearModelState: false);
+        }
 
         TempData["Success"] = "Quest updated.";
         return RedirectToAction(nameof(Quests), new { section = "create" });
@@ -171,7 +209,12 @@ public class QuestsController : Controller
             .AsNoTracking()
             .Include(q => q.Questions)
             .FirstOrDefaultAsync(q => q.Id == id);
-        return quest is null ? NotFound() : View(quest);
+        if (quest is null)
+        {
+            _logger.LogWarning("Quest {QuestId} not found for deletion", id);
+            return NotFound();
+        }
+        return View(quest);
     }
 
     [HttpPost, ActionName("Delete")]
@@ -181,10 +224,19 @@ public class QuestsController : Controller
         var quest = await _context.Quests.FindAsync(id);
         if (quest is null) return RedirectToAction(nameof(Quests), new { section = "create" });
 
-        _context.Quests.Remove(quest);
-        await _context.SaveChangesAsync();
-
-        TempData["Success"] = "Quest deleted.";
+        try
+        {
+            // Its questions and options are removed by the database (cascade delete)
+            _context.Quests.Remove(quest);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Deleted quest {QuestId} ({Title})", id, quest.Title);
+            TempData["Success"] = "Quest deleted.";
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Failed to delete quest {QuestId}", id);
+            TempData["Error"] = "Could not delete the quest.";
+        }
         return RedirectToAction(nameof(Quests), new { section = "create" });
     }
 

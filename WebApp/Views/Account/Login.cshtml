@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "Sign in";
+    var users = ViewData["Users"] as List<SelectListItem> ?? [];
+    var returnUrl = ViewData["ReturnUrl"] as string;
+}
+
+<div class="container py-4 text-light" data-bs-theme="dark">
+    <h1>Sign in</h1>
+
+    @if (users.Count == 0)
+    {
+        <p>There are no users yet. <a asp-controller="Users" asp-action="Create">Create a user</a> first.</p>
+    }
+    else
+    {
+        <form asp-action="Login" method="post">
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+            <div class="mb-3">
+                <label for="userId" class="form-label">Sign in as</label>
+                <select id="userId" name="userId" class="form-select" asp-items="users" required>
+                    <option value="">Choose a user</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Sign in</button>
+        </form>
+    }
+</div>
