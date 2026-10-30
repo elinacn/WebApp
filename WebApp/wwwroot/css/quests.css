@@ -377,3 +377,196 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+.quests-create-block [hidden] {
+display: none !important;
+}
+
+.quests-create-hint-inline {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  margin: 4px 0 8px;
+}
+
+.quests-option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.quests-answer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.quests-option-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quests-option-row input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  background-color: #111827;
+  color: #ffffff;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.quests-option-correct,
+.quests-create-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #e5e7eb;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.quests-create-check {
+  margin: 4px 0 8px;
+}
+
+.quests-option-letter {
+  width: 20px;
+  font-weight: 600;
+  color: #c4b5fd;
+}
+
+.quests-remove-q:disabled,
+.quests-reset:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.quests-remove-q:disabled:hover {
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+.quests-option-row .quests-remove-q {
+  font-size: 1rem;
+  line-height: 1;
+  padding: 4px 10px;
+}
+
+/* ---- Space between elements ---- */
+.quests-create-form {
+  gap: 28px;
+  padding: 28px;
+}
+
+.quests-create-grid {
+  gap: 18px 20px;
+}
+
+.quests-create-field {
+  gap: 8px;
+}
+
+.quests-create-block {
+  padding: 26px;
+}
+
+.quests-create-block > * + * {
+  margin-top: 24px;
+}
+
+.quests-create-check {
+  margin: 6px 0 12px;
+}
+
+/* ---- Question header: title left, Remove far right ---- */
+.quests-q-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.quests-q-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.quests-q-header .quests-remove-q {
+  margin-left: auto;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+}
+
+/* ---- Bigger "important" titles ---- */
+.quests-create-subheading,
+.quests-create-label {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.quests-create-field-important {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #c4b5fd;
+}
+
+/* ---- Options / answers: more room before the add buttons ---- */
+.quests-option-list,
+.quests-answer-list {
+  gap: 12px;
+  margin: 12px 0 0;
+}
+
+.js-add-option,
+.js-add-answer {
+  margin-top: 24px;
+}
+
+/* ---- + button: centered under the question box ---- */
+.quests-add-q-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.quests-add-q {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 6px;
+  font-size: 0; /* hides the "+" character, the bars below replace it */
+}
+
+.quests-add-q::before,
+.quests-add-q::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background-color: currentColor;
+  transform: translate(-50%, -50%);
+}
+
+.quests-add-q::before {
+  width: 20px;
+  height: 3px;
+}
+
+.quests-add-q::after {
+  width: 3px;
+  height: 20px;
+}
+
+.quests-create-block {
+  scroll-margin-top: 110px;
+}

@@ -4,6 +4,10 @@ namespace WebApp.ViewModels;
 
 public class CreateQuestQuestionViewModel
 {
+    // Multiple choice: starts with 2 options, the user can add up to 6
+    public const int MinOptions = 2;
+    public const int MaxOptions = 6;
+
     public string Id { get; set; } = string.Empty;
     public string Type { get; set; } = "multipleChoice";
 
@@ -17,16 +21,14 @@ public class CreateQuestQuestionViewModel
     public List<CreateQuestOptionViewModel> Options { get; set; } =
     [
         new() { Id = "a" },
-        new() { Id = "b" },
-        new() { Id = "c" },
-        new() { Id = "d" }
+        new() { Id = "b" }
     ];
 
-    [StringLength(10)]
-    public string? CorrectOptionId { get; set; } = "a";
+    public List<string> CorrectOptionIds { get; set; } = [];
 
-    [StringLength(500, ErrorMessage = "Accepted answers can be at most 500 characters.")]
-    public string? AcceptedAnswers { get; set; }
+    // Free text: One correct answer per answer box
+    public bool CaseSensitive { get; set; }
+    public List<string?> AcceptedAnswers { get; set; } = [""];
 
     [StringLength(1000, ErrorMessage = "Explaination can be at most 1000 characters.")]
     public string? Explaination { get; set; }

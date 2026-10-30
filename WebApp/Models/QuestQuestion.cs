@@ -16,11 +16,13 @@ public class QuestQuestion
 
     public int Points { get; set; } = 1;
 
-    [StringLength(10)]
+    [StringLength(20)]
     public string? CorrectOptionId { get; set; }
 
     [StringLength(500)]
     public string? AcceptedAnswers { get; set; }
+
+    public bool CaseSensitive { get; set; }
 
     [StringLength(1000)]
     public string? Explaination { get; set; }

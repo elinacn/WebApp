@@ -3,6 +3,8 @@
 
 @{
     var isEdit = Model.NewQuest.Id > 0;
+    var minOptions = CreateQuestQuestionViewModel.MinOptions;
+    var maxOptions = CreateQuestQuestionViewModel.MaxOptions;
 }
 
 <section class="quests-create-panel">
@@ -50,12 +52,12 @@
 
         <div class="quests-create-grid">
             <label class="quests-create-field">
-                title
+                Title
                 <input asp-for="NewQuest.Title" />
                 <span asp-validation-for="NewQuest.Title" class="quests-validation"></span>
             </label>
             <label class="quests-create-field">
-                difficulty
+                Difficulty
                 <select asp-for="NewQuest.Difficulty" id="quest-difficulty">
                     <option value="">Select difficulty</option>
                     @foreach (var level in Enum.GetNames<WebApp.Models.Difficulty>())
@@ -66,75 +68,122 @@
                 <span asp-validation-for="NewQuest.Difficulty" class="quests-validation"></span>
             </label>
             <label class="quests-create-field quests-create-field-wide">
-                description
+                Description
                 <textarea asp-for="NewQuest.Description" rows="3"></textarea>
                 <span asp-validation-for="NewQuest.Description" class="quests-validation"></span>
             </label>
         </div>
 
         <div class="quests-create-q-bar">
-            <h3 class="quests-create-subheading">questions</h3>
-            <button class="quests-reset" type="submit" name="addQuestion" value="1" formnovalidate>Add question</button>
+            <h3 class="quests-create-subheading">Questions</h3>
         </div>
 
         @for (var i = 0; i < Model.NewQuest.Questions.Count; i++)
         {
-            <fieldset class="quests-create-block">
-                <legend>
-                    Question @(i + 1)
+            var question = Model.NewQuest.Questions[i];
+            var isMultipleChoice = question.Type != "freeText";
+
+            <fieldset class="quests-create-block" data-question>
+                <div class="quests-q-header">
+                    <h4 class="quests-q-title">Question @(i + 1)</h4>
                     @if (Model.NewQuest.Questions.Count > 1)
                     {
                         <button class="quests-remove-q" type="submit" name="removeQuestion" value="@i" formnovalidate>Remove</button>
                     }
-                </legend>
+                </div>
+
                 <div class="quests-create-grid">
                     <label class="quests-create-field">
-                        type
-                        <select asp-for="NewQuest.Questions[i].Type">
-                            <option value="multipleChoice">multipleChoice</option>
-                            <option value="freeText">freeText</option>
+                        Question type
+                        <select asp-for="NewQuest.Questions[i].Type" class="js-question-type">
+                            <option value="multipleChoice">Multiple choice</option>
+                            <option value="freeText">Free text</option>
                         </select>
                         <span asp-validation-for="NewQuest.Questions[i].Type" class="quests-validation"></span>
                     </label>
                     <label class="quests-create-field">
-                        points
+                        Points
                         <input asp-for="NewQuest.Questions[i].Points" type="number" min="0" />
                         <span asp-validation-for="NewQuest.Questions[i].Points" class="quests-validation"></span>
                     </label>
-                    <label class="quests-create-field quests-create-field-wide">
-                        text
+                    <label class="quests-create-field quests-create-field-wide quests-create-field-important">
+                        Question
                         <textarea asp-for="NewQuest.Questions[i].Question" rows="2"></textarea>
                         <span asp-validation-for="NewQuest.Questions[i].Question" class="quests-validation"></span>
                     </label>
                 </div>
 
-                <p class="quests-create-label">options</p>
-                <span asp-validation-for="NewQuest.Questions[i].Options" class="quests-validation"></span>
+                @* ---------- Multiple choice ---------- *@
+                <div class="js-panel-multiple-choice" hidden="@(!isMultipleChoice)">
+                    <p class="quests-create-label">Options</p>
+                    <p class="quests-create-hint-inline">Tick the box next to every correct option.</p>
+                    <span asp-validation-for="NewQuest.Questions[i].Options" class="quests-validation"></span>
+                    <span asp-validation-for="NewQuest.Questions[i].CorrectOptionIds" class="quests-validation"></span>
+
+                    <div class="quests-option-list js-option-list">
+                        @for (var o = 0; o < question.Options.Count; o++)
+                        {
+                            var option = question.Options[o];
+                            <div class="quests-option-row js-option-row">
+                                <label class="quests-option-correct" title="Mark as correct">
+                                    <input type="checkbox" class="js-option-correct"
+                                           aria-label="Mark as correct"
+                                           name="NewQuest.Questions[@(i)].CorrectOptionIds"
+                                           value="@option.Id"
+                                           checked="@question.CorrectOptionIds.Contains(option.Id)" />
+                                </label>
+                                <input type="text" class="js-option-text"
+                                       name="NewQuest.Questions[@(i)].Options[@(o)].Text"
+                                       value="@option.Text"
+                                       placeholder="Option @option.Id.ToUpperInvariant()" />
+                                <button type="button" class="quests-remove-q js-remove-option"
+                                        title="Delete option" aria-label="Delete option"
+                                        disabled="@(question.Options.Count <= minOptions)">&times;</button>
+                            </div>
+                        }
+                    </div>
+                    <button type="button" class="quests-reset js-add-option"
+                            disabled="@(question.Options.Count >= maxOptions)">Add option</button>
+                </div>
+
+                @* ---------- Free text ---------- *@
+                <div class="js-panel-free-text" hidden="@(isMultipleChoice)">
+                    <p class="quests-create-label">Correct answers</p>
+                    <label class="quests-create-check">
+                        <input asp-for="NewQuest.Questions[i].CaseSensitive" />
+                        Capitalization matters
+                    </label>
+                    <span asp-validation-for="NewQuest.Questions[i].AcceptedAnswers" class="quests-validation"></span>
+
+                    <div class="quests-answer-list js-answer-list">
+                        @for (var a = 0; a < question.AcceptedAnswers.Count; a++)
+                        {
+                            <div class="quests-option-row js-answer-row">
+                                <input type="text" class="js-answer-text"
+                                        name="NewQuest.Questions[@(i)].AcceptedAnswers[@(a)]"
+                                        value="@question.AcceptedAnswers[a]"
+                                        placeholder="Correct answer" />
+                                <button type="button" class="quests-remove-q js-remove-answer"
+                                        title="Delete answer" aria-label="Delete answer"
+                                        disabled="@(question.AcceptedAnswers.Count <= 1)">&times;</button>
+                            </div>
+                        }
+                    </div>
+                    <button type="button" class="quests-reset js-add-answer">Add another correct answer</button>
+                </div>
+
                 <div class="quests-create-grid">
-                    @for (var o = 0; o < Model.NewQuest.Questions[i].Options.Count; o++)
-                    {
-                        <label class="quests-create-field">
-                            @Model.NewQuest.Questions[i].Options[o].Id
-                            <input type="hidden" asp-for="NewQuest.Questions[i].Options[o].Id" />
-                            <input asp-for="NewQuest.Questions[i].Options[o].Text" />
-                        </label>
-                    }
-                    <label class="quests-create-field">
-                        correctOptionId
-                        <input asp-for="NewQuest.Questions[i].CorrectOptionId" placeholder="a" />
-                        <span asp-validation-for="NewQuest.Questions[i].CorrectOptionId" class="quests-validation"></span>
-                    </label>
-                    <label class="quests-create-field">
-                        acceptedAnswers
-                        <input asp-for="NewQuest.Questions[i].AcceptedAnswers" placeholder="contains()" />
-                        <span asp-validation-for="NewQuest.Questions[i].AcceptedAnswers" class="quests-validation"></span>
-                    </label>
                     <label class="quests-create-field quests-create-field-wide">
-                        explaination
+                        Explanation (optional)
                         <textarea asp-for="NewQuest.Questions[i].Explaination" rows="2"></textarea>
                     </label>
                 </div>
             </fieldset>
+
+            <div class="quests-add-q-row">
+                <button class="quests-reset quests-add-q" type="submit" name="addQuestion" value="@i"
+                        title="Add question" aria-label="Add question" formnovalidate>+</button>
+            </div>
         }
 
         <div class="quests-create-actions">
@@ -142,7 +191,7 @@
             <a class="quests-reset" asp-controller="Quests" asp-action="Quests" asp-route-section="@(isEdit ? "create" : "library")">Cancel</a>
         </div>
     </form>
-    
+
     <dialog id="difficulty-dialog" class="quests-dialog">
         <h3>Difficulty not selected</h3>
         <p>You need to choose a difficulty before the quest can be saved.</p>
@@ -155,11 +204,26 @@
         </div>
     </dialog>
 
+    <dialog id="correct-dialog" class="quests-dialog">
+        <h3>No correct option selected</h3>
+        <p id="correct-dialog-text">Every multiple choice question needs at least one correct option.</p>
+        <div class="quests-create-actions">
+            <button type="button" class="quests-apply" id="correct-keep">Keep editing</button>
+            <button type="button" class="quests-reset" id="correct-cancel"
+                    data-cancel-url="@Url.Action("Quests", "Quests", new { section = isEdit ? "create" : "library" })">
+                Cancel quest
+            </button>
+        </div>
+    </dialog>
+
     <script>
         (function () {
             const form = document.querySelector(".quests-create-form");
             const select = document.getElementById("quest-difficulty");
             const dialog = document.getElementById("difficulty-dialog");
+            const correctDialog = document.getElementById("correct-dialog");
+            const correctDialogText = document.getElementById("correct-dialog-text");
+            let blockMissingCorrect = null;
 
             form.addEventListener("submit", function (e) {
                 // Let the "add question" / "remove question" buttons through
@@ -169,6 +233,21 @@
                 if (!select.value) {
                     e.preventDefault();
                     dialog.showModal();
+                    return;
+                }
+
+                // Every multiple choice question needs at least one ticked correct option
+                const blocks = Array.from(form.querySelectorAll("[data-question]"));
+                const missingIndex = blocks.findIndex(function (block) {
+                    const isFreeText = block.querySelector(".js-question-type").value === "freeText";
+                    return !isFreeText && !block.querySelector(".js-option-correct:checked");
+                });
+                if (missingIndex !== -1) {
+                    e.preventDefault();
+                    blockMissingCorrect = blocks[missingIndex];
+                    correctDialogText.textContent =
+                        "Question " + (missingIndex + 1) + " needs at least one correct option ticked.";
+                    correctDialog.showModal();
                 }
             });
 
@@ -179,6 +258,137 @@
 
             document.getElementById("difficulty-cancel").addEventListener("click", function () {
                 window.location.href = this.dataset.cancelUrl;
+            });
+
+            document.getElementById("correct-keep").addEventListener("click", function () {
+                correctDialog.close();
+                if (blockMissingCorrect) {
+                    blockMissingCorrect.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            });
+
+            document.getElementById("correct-cancel").addEventListener("click", function () {
+                window.location.href = this.dataset.cancelUrl;
+            });
+
+            // Pressing Enter in a field would otherwise trigger the first submit button in the form
+            form.addEventListener("keydown", function (e) {
+                if (e.key === "Enter" && e.target.tagName === "INPUT") e.preventDefault();
+            });
+
+
+            // ---- After adding a question, go to the new one; after removing, keep the scroll position ----
+            const SCROLL_KEY = "quest-form-scroll";
+
+            form.addEventListener("submit", function (e) {
+                const name = e.submitter ? e.submitter.name : "";
+                if (name === "addQuestion") {
+                    // The new question appears right after the one whose "+" was clicked
+                    sessionStorage.setItem(SCROLL_KEY, "new:" + (parseInt(e.submitter.value, 10) + 1));
+                } else if (name === "removeQuestion") {
+                    sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
+                }
+            });
+
+            const savedScroll = sessionStorage.getItem(SCROLL_KEY);
+            if (savedScroll !== null) {
+                sessionStorage.removeItem(SCROLL_KEY);
+                if (savedScroll.startsWith("new:")) {
+                    const blocks = form.querySelectorAll("[data-question]");
+                    const target = blocks[parseInt(savedScroll.slice(4), 10)];
+                    if (target) {
+                        target.scrollIntoView({ behavior: "instant", block: "start" });
+                        // Put the cursor in the new question's text box, without scrolling again
+                        target.querySelector("textarea").focus({ preventScroll: true });
+                    }
+                } else {
+                    window.scrollTo({ top: parseInt(savedScroll, 10), behavior: "instant" });
+                }
+            }
+
+
+            // ---- Per-question behaviour: type switch, options, answers ----
+            const LETTERS = ["A", "B", "C", "D", "E", "F"];
+            const MIN_OPTIONS = 2;
+            const MAX_OPTIONS = 6;
+
+            document.querySelectorAll("[data-question]").forEach(function (block) {
+                const typeSelect = block.querySelector(".js-question-type");
+                const choicePanel = block.querySelector(".js-panel-multiple-choice");
+                const textPanel = block.querySelector(".js-panel-free-text");
+                const optionList = block.querySelector(".js-option-list");
+                const addOptionBtn = block.querySelector(".js-add-option");
+                const answerList = block.querySelector(".js-answer-list");
+                const addAnswerBtn = block.querySelector(".js-add-answer");
+
+                function showType() {
+                    const isFreeText = typeSelect.value === "freeText";
+                    choicePanel.hidden = isFreeText;
+                    textPanel.hidden = !isFreeText;
+                }
+
+                // Keeps names Options[0], Options[1]... gap-free so the server can bind them
+                function renumberOptions() {
+                    const rows = optionList.querySelectorAll(".js-option-row");
+                    rows.forEach(function (row, o) {
+                        const letter = LETTERS[o];
+                        const text = row.querySelector(".js-option-text");
+                        row.querySelector(".js-option-correct").value = letter.toLowerCase();
+                        text.name = text.name.replace(/Options\[\d+\]/, "Options[" + o + "]");
+                        text.placeholder = "Option " + letter;
+                        row.querySelector(".js-remove-option").disabled = rows.length <= MIN_OPTIONS;
+                    });
+                    addOptionBtn.disabled = rows.length >= MAX_OPTIONS;
+                }
+
+                function renumberAnswers() {
+                    const rows = answerList.querySelectorAll(".js-answer-row");
+                    rows.forEach(function (row, a) {
+                        const input = row.querySelector(".js-answer-text");
+                        input.name = input.name.replace(/AcceptedAnswers\[\d+\]/, "AcceptedAnswers[" + a + "]");
+                        row.querySelector(".js-remove-answer").disabled = rows.length <= 1;
+                    });
+                }
+
+                // Copies the first row as a template and clears it
+                function addRow(list, rowSelector) {
+                    const row = list.querySelector(rowSelector).cloneNode(true);
+                    row.querySelectorAll("input[type='text']").forEach(function (i) { i.value = ""; });
+                    row.querySelectorAll("input[type='checkbox']").forEach(function (i) { i.checked = false; });
+                    list.appendChild(row);
+                    row.querySelector("input[type='text']").focus();
+                }
+
+                typeSelect.addEventListener("change", showType);
+
+                addOptionBtn.addEventListener("click", function () {
+                    if (optionList.querySelectorAll(".js-option-row").length >= MAX_OPTIONS) return;
+                    addRow(optionList, ".js-option-row");
+                    renumberOptions();
+                });
+
+                optionList.addEventListener("click", function (e) {
+                    const btn = e.target.closest(".js-remove-option");
+                    if (!btn || optionList.querySelectorAll(".js-option-row").length <= MIN_OPTIONS) return;
+                    btn.closest(".js-option-row").remove();
+                    renumberOptions();
+                });
+
+                addAnswerBtn.addEventListener("click", function () {
+                    addRow(answerList, ".js-answer-row");
+                    renumberAnswers();
+                });
+
+                answerList.addEventListener("click", function (e) {
+                    const btn = e.target.closest(".js-remove-answer");
+                    if (!btn || answerList.querySelectorAll(".js-answer-row").length <= 1) return;
+                    btn.closest(".js-answer-row").remove();
+                    renumberAnswers();
+                });
+
+                showType();
+                renumberOptions();
+                renumberAnswers();
             });
         })();
     </script>
