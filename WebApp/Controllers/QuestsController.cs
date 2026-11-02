@@ -22,6 +22,8 @@ public class QuestsController : Controller
 {
     private static readonly string[] QuestionTypes = ["multipleChoice", "freeText"];
 
+    private static readonly string[] OptionKeys = ["a", "b", "c", "d", "e", "f"];
+
     private readonly ILogger<QuestsController> _logger;
     private readonly SheetsDbContext _context;
 
@@ -58,12 +60,13 @@ public class QuestsController : Controller
             CompletedQuests = LoadCompletedQuests(filter),
             FeaturedQuests = LoadFeaturedQuests(filter),
             RecommendedQuests = LoadRecommendedQuests(filter),
+            ExploreQuests = section == "explore" ? await LoadExploreQuestsAsync(filter) : [],
             SavedQuests = LoadSavedQuests(filter)
         };
 
         if (section == "create" || section == "library")
         {
-            model.MyQuests = await LoadMyQuestsAsync(section == "library" ? searchText : null);
+            model.MyQuests = await LoadMyQuestsAsync(section == "library" ? filter : null);
         }
 
         return View(model);
@@ -85,7 +88,7 @@ public class QuestsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(
         [Bind(Prefix = "NewQuest")] CreateQuestViewModel newQuest,
-        string? addQuestion,
+        int? addQuestion,
         int? removeQuestion)
     {
         PrepareQuestions(newQuest);
@@ -131,7 +134,7 @@ public class QuestsController : Controller
     public async Task<IActionResult> Edit(
         int id,
         [Bind(Prefix = "NewQuest")] CreateQuestViewModel newQuest,
-        string? addQuestion,
+        int? addQuestion,
         int? removeQuestion)
     {
         if (id != newQuest.Id) return BadRequest();
@@ -189,11 +192,13 @@ public class QuestsController : Controller
     }
 
     private async Task<IActionResult?> HandleQuestionButtonsAsync(
-        CreateQuestViewModel newQuest, string? addQuestion, int? removeQuestion)
+        CreateQuestViewModel newQuest, int? addQuestion, int? removeQuestion)
     {
-        if (!string.IsNullOrEmpty(addQuestion))
+        // addQuestion = index of the question whose "+" was clicked, the new one goes right after it
+        if (addQuestion is int after)
         {
-            newQuest.Questions.Add(new CreateQuestQuestionViewModel());
+            var position = Math.Clamp(after + 1, 0, newQuest.Questions.Count);
+            newQuest.Questions.Insert(position, new CreateQuestQuestionViewModel());
             return await CreateFormAsync(newQuest);
         }
 
@@ -217,13 +222,20 @@ public class QuestsController : Controller
         });
     }
 
-    private async Task<List<QuestListItemViewModel>> LoadMyQuestsAsync(string? searchText = null)
+    private async Task<List<QuestListItemViewModel>> LoadMyQuestsAsync(QuestFilterViewModel? filter = null)
     {
         var query = _context.Quests.AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(searchText))
+        if (!string.IsNullOrWhiteSpace(filter?.SearchText))
         {
-            query = query.Where(q => EF.Functions.Like(q.Title, $"%{searchText}%"));
+            var text = filter.SearchText;
+            query = query.Where(q => EF.Functions.Like(q.Title, $"%{text}%"));
+        }
+
+        if (filter?.Difficulty is Difficulty level)
+        {
+            var levelName = level.ToString();
+            query = query.Where(q => EF.Functions.Like(q.Difficulty, levelName));
         }
 
         return await query
@@ -239,6 +251,7 @@ public class QuestsController : Controller
         })
         .ToListAsync();
     }
+    
 
     private static void PrepareQuestions(CreateQuestViewModel newQuest)
     {
@@ -249,20 +262,35 @@ public class QuestsController : Controller
 
         foreach (var question in newQuest.Questions)
         {
-            foreach (var key in new[] { "a", "b", "c", "d" })
-            {
-                if (!question.Options.Any(o => o.Id == key))
-                {
-                    question.Options.Add(new CreateQuestOptionViewModel { Id = key });
-                }
-            }
+            if (question.Options.Count > CreateQuestQuestionViewModel.MaxOptions)
+                question.Options = question.Options.Take(CreateQuestQuestionViewModel.MaxOptions).ToList();
 
-            question.Options = question.Options.OrderBy(o => o.Id, StringComparer.Ordinal).ToList();
+            while (question.Options.Count < CreateQuestQuestionViewModel.MinOptions)
+                question.Options.Add(new CreateQuestOptionViewModel());
+
+            // Keys always follow in alphabetical order: a, b, c, d, e, f
+            for (var o = 0; o < question.Options.Count; o++)
+                question.Options[o].Id = OptionKeys[o];
+
+            var validIds = question.Options.Select(o => o.Id).ToList();
+            question.CorrectOptionIds = question.CorrectOptionIds
+                .Where(id => validIds.Contains(id))
+                .Distinct()
+                .ToList();
+
+            if (question.AcceptedAnswers.Count == 0)
+                question.AcceptedAnswers.Add(string.Empty);
         }
     }
 
-        private void ValidateQuest(CreateQuestViewModel newQuest)
+    private void ValidateQuest(CreateQuestViewModel newQuest)
     {
+        var chosen = (newQuest.Difficulty ?? string.Empty).Trim();
+        if (!Enum.GetNames<Difficulty>().Contains(chosen, StringComparer.OrdinalIgnoreCase))
+        {
+            ModelState.AddModelError("NewQuest.Difficulty", "Choose a difficulty.");
+        }
+
         for (var i = 0; i < newQuest.Questions.Count; i++)
         {
             var question = newQuest.Questions[i];
@@ -276,29 +304,33 @@ public class QuestsController : Controller
 
             if (question.Type == "freeText")
             {
-                if (SplitAnswers(question.AcceptedAnswers).Count == 0)
-                    ModelState.AddModelError($"{prefix}.AcceptedAnswers", "Add at least one accepted answer (comma separated).");
+                var answers = CleanAnswers(question.AcceptedAnswers, question.CaseSensitive);
+                if (answers.Count == 0)
+                    ModelState.AddModelError($"{prefix}.AcceptedAnswers", "Add at least one correct answer.");
+                else if (string.Join("\n", answers).Length > 500)
+                    ModelState.AddModelError($"{prefix}.AcceptedAnswers", "The correct answers can be at most 500 characters in total.");
                 continue;
             }
 
             var filled = question.Options.Where(o => !string.IsNullOrWhiteSpace(o.Text)).ToList();
             if (filled.Count < 2)
-            {
                 ModelState.AddModelError($"{prefix}.Options", "Fill in at least two options.");
-            }
 
-            var correct = (question.CorrectOptionId ?? string.Empty).Trim();
-            if (!filled.Any(o => string.Equals(o.Id, correct, StringComparison.OrdinalIgnoreCase)))
-            {
-                ModelState.AddModelError($"{prefix}.CorrectOptionId", "The correct option must be one of the filled-in options.");
-            }
+            if (question.CorrectOptionIds.Count == 0)
+                ModelState.AddModelError($"{prefix}.CorrectOptionIds", "Tick at least one correct option.");
+            else if (question.CorrectOptionIds.Any(id => !filled.Any(o => o.Id == id)))
+                ModelState.AddModelError($"{prefix}.CorrectOptionIds", "A correct option can't be empty.");
         }
+
     }
 
-    private static List<string> SplitAnswers(string? acceptedAnswers) =>
-    (acceptedAnswers ?? string.Empty)
-        .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-        .ToList();
+    // Removes blank boxes and duplicates
+    private static List<string> CleanAnswers(IEnumerable<string?> answers, bool caseSensitive) =>
+        answers
+            .Where(a => !string.IsNullOrWhiteSpace(a))
+            .Select(a => a!.Trim())
+            .Distinct(caseSensitive ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
     private static void ApplyToEntity(Quest quest, CreateQuestViewModel newQuest)
     {
@@ -320,19 +352,21 @@ public class QuestsController : Controller
 
             if (source.Type == "freeText")
             {
-                question.AcceptedAnswers = string.Join(", ", SplitAnswers(source.AcceptedAnswers));
+                question.CaseSensitive = source.CaseSensitive;
+                question.AcceptedAnswers = string.Join("\n", CleanAnswers(source.AcceptedAnswers, source.CaseSensitive));
             }
             else
             {
-                question.CorrectOptionId = (source.CorrectOptionId ?? string.Empty).Trim().ToLowerInvariant();
+                // Empty options are skipped, the rest are renumbered a, b, c ...
+                var correctKeys = new List<string>();
+                var next = 0;
                 foreach (var option in source.Options.Where(o => !string.IsNullOrWhiteSpace(o.Text)))
                 {
-                    question.Options.Add(new QuestOption
-                    {
-                        OptionKey = (option.Id ?? string.Empty).Trim().ToLowerInvariant(),
-                        Text = option.Text!.Trim()
-                    });
+                    var key = OptionKeys[next++];
+                    question.Options.Add(new QuestOption { OptionKey = key, Text = option.Text!.Trim() });
+                    if (source.CorrectOptionIds.Contains(option.Id)) correctKeys.Add(key);
                 }
+                question.CorrectOptionId = string.Join(",", correctKeys);
             }
 
             quest.Questions.Add(question);
@@ -348,21 +382,66 @@ public class QuestsController : Controller
         Difficulty = quest.Difficulty,
         Questions = quest.Questions
             .OrderBy(q => q.Position)
-            .Select(q => new CreateQuestQuestionViewModel
+            .Select(q =>
             {
-                Id = $"q{q.Position + 1}",
-                Type = q.Type,
-                Question = q.Question,
-                Points = q.Points,
-                CorrectOptionId = q.CorrectOptionId ?? "a",
-                AcceptedAnswers = q.AcceptedAnswers,
-                Explaination = q.Explaination,
-                Options = q.Options
-                    .Select(o => new CreateQuestOptionViewModel { Id = o.OptionKey, Text = o.Text })
-                    .ToList()
+                var options = q.Options.OrderBy(o => o.OptionKey, StringComparer.Ordinal).ToList();
+                var correctKeys = (q.CorrectOptionId ?? string.Empty)
+                    .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+                return new CreateQuestQuestionViewModel
+                {
+                    Id = $"q{q.Position + 1}",
+                    Type = q.Type,
+                    Question = q.Question,
+                    Points = q.Points,
+                    Explaination = q.Explaination,
+                    CaseSensitive = q.CaseSensitive,
+                    AcceptedAnswers = (q.AcceptedAnswers ?? string.Empty)
+                        .Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                        .Select(a => (string?)a)
+                        .ToList(),
+                    Options = options
+                        .Select(o => new CreateQuestOptionViewModel { Text = o.Text })
+                        .ToList(),
+                    CorrectOptionIds = options
+                        .Select((o, index) => (o.OptionKey, index))
+                        .Where(x => correctKeys.Contains(x.OptionKey))
+                        .Select(x => OptionKeys[x.index])
+                        .ToList()
+                };
             })
             .ToList()
     };
+
+        private async Task<List<QuestCardViewModel>> LoadExploreQuestsAsync(QuestFilterViewModel filter)
+    {
+        var query = _context.Quests.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(filter.SearchText))
+        {
+            query = query.Where(q => EF.Functions.Like(q.Title, $"%{filter.SearchText}%"));
+        }
+
+        if (filter.Difficulty is Difficulty level)
+        {
+            var levelName = level.ToString();
+            query = query.Where(q => EF.Functions.Like(q.Difficulty, levelName));
+        }
+
+        return await query
+            .OrderByDescending(q => q.CreatedAt)
+            .ThenBy(q => q.Title)
+            .Select(q => new QuestCardViewModel
+            {
+                Id = q.Id,
+                Title = q.Title,
+                DifficultyLabel = q.Difficulty,
+                Points = q.Questions.Sum(x => (int?)x.Points) ?? 0,
+                Status = QuestStatus.NotStarted
+            })
+            .ToListAsync();
+    }
+
     private List<QuestCardViewModel> LoadContinueQuests(QuestFilterViewModel filter)
     {
         // DATABASE HOOK: connect the database here. 
@@ -392,4 +471,6 @@ public class QuestsController : Controller
         // DATABASE HOOK: connect the database here. 
         return [];
     }
+
+    
 }

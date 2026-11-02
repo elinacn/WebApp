@@ -84,8 +84,11 @@ namespace WebApp.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("CaseSensitive")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("CorrectOptionId")
-                        .HasMaxLength(10)
+                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Explaination")

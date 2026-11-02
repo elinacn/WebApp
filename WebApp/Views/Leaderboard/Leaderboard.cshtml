@@ -1,0 +1,73 @@
+@model WebApp.ViewModels.LeaderboardViewModel
+@{
+    ViewData["Title"] = "Leaderboard";
+}
+<link rel="stylesheet" href="~/css/leaderboard.css" asp-append-version="true" />
+
+<div class="leaderboard-container">
+    <header class="leaderboard-heading">
+        <div>
+            <p class="leaderboard-eyebrow">Learn. Practice. Progress.</p>
+            <h1>Leaderboard</h1>
+            <p>See how learners are progressing through their quizzes.</p>
+        </div>
+        <span class="leaderboard-sample">Sample rankings</span>
+    </header>
+
+    <form class="leaderboard-filters" asp-controller="Leaderboard" asp-action="Leaderboard" method="get">
+        <div>
+            <label for="leaderboard-search">Student name</label>
+            <input id="leaderboard-search" name="search" value="@Model.Search" placeholder="Search students" maxlength="100" />
+        </div>
+        <div>
+            <label for="leaderboard-course">Course</label>
+            <select id="leaderboard-course" name="course">
+                <option value="">All courses</option>
+                @foreach (var course in Model.Courses)
+                {
+                    <option value="@course" selected="@(course == Model.Course)">@course</option>
+                }
+            </select>
+        </div>
+        <button type="submit">Apply filters</button>
+        <a class="leaderboard-reset" asp-action="Leaderboard">Clear</a>
+    </form>
+
+    <section class="leaderboard-results">
+        <div class="leaderboard-results-heading">
+            <h2>@(string.IsNullOrEmpty(Model.Course) ? "Overall rankings" : Model.Course)</h2>
+            <span>@Model.Entries.Count student(s)</span>
+        </div>
+        @if (Model.Entries.Count == 0)
+        {
+            <div class="leaderboard-empty">
+                <h3>No students found</h3>
+                <p>Try another name or select a different course.</p>
+            </div>
+        }
+        else
+        {
+            <div class="leaderboard-table-wrapper">
+                <table class="leaderboard-table">
+                    <caption>Sample students ranked by total points, highest first.</caption>
+                    <thead>
+                        <tr><th scope="col">Rank</th><th scope="col">Student</th><th scope="col">Course</th><th scope="col">Quizzes completed</th><th scope="col">Points</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var student in Model.Entries)
+                        {
+                            <tr class="@(student.Rank <= 3 ? "leaderboard-top-rank" : "")">
+                                <td><span class="leaderboard-rank">@student.Rank</span></td>
+                                <th scope="row">@student.Name</th>
+                                <td>@student.Course</td>
+                                <td>@student.QuizzesCompleted</td>
+                                <td class="leaderboard-points">@student.Points.ToString("N0")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+    <p class="leaderboard-note">These names and scores are demonstration data. Real quiz results will be connected later.</p>
+</div>

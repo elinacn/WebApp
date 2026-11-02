@@ -1,0 +1,55 @@
+/* Scoped to the MVC Leaderboard page. */
+.leaderboard-container {
+    max-width: 1100px;
+    margin: 40px auto 100px;
+    padding: 0 28px;
+    color: #f8fafc;
+    font-family: Arial, sans-serif;
+    line-height: 1.5;
+}
+.leaderboard-container * { box-sizing: border-box; }
+.leaderboard-heading { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-bottom: 28px; }
+.leaderboard-heading h1 { margin: 6px 0 10px; font-size: 34px; font-weight: 600; }
+.leaderboard-heading p { margin: 0; color: #b8c2d2; }
+.leaderboard-heading .leaderboard-eyebrow { color: #aca8ff; font-size: 13px; }
+.leaderboard-sample { padding: 8px 14px; border: 1px solid #5552a5; border-radius: 20px; color: #c5c2ff; font-size: 12px; white-space: nowrap; }
+.leaderboard-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; padding: 24px; background: #172133; border: 1px solid #354159; border-radius: 12px; margin-bottom: 26px; }
+.leaderboard-filters > div { flex: 1; min-width: 180px; }
+.leaderboard-filters label { display: block; margin-bottom: 8px; font-size: 14px; }
+.leaderboard-filters input, .leaderboard-filters select { width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 6px; border: 1px solid #4a5870; background: #101827; color: #f8fafc; font: inherit; }
+.leaderboard-filters input::placeholder { color: #a1aec2; }
+.leaderboard-filters button { min-height: 44px; padding: 10px 18px; border: 0; border-radius: 6px; background: #6663ef; color: #fff; font: inherit; cursor: pointer; }
+.leaderboard-filters button:hover { background: #5552dc; }
+.leaderboard-reset { padding: 10px 6px; color: #c5c2ff; }
+.leaderboard-reset:hover { color: #fff; }
+.leaderboard-filters input:focus-visible, .leaderboard-filters select:focus-visible, .leaderboard-filters button:focus-visible, .leaderboard-reset:focus-visible { outline: 2px solid #aca8ff; outline-offset: 3px; }
+.leaderboard-results { background: #172133; border: 1px solid #354159; border-radius: 12px; overflow: hidden; }
+.leaderboard-results-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 24px; }
+.leaderboard-results-heading h2 { margin: 0; font-size: 21px; }
+.leaderboard-results-heading span { color: #b8c2d2; font-size: 13px; white-space: nowrap; }
+.leaderboard-table-wrapper { overflow-x: auto; }
+.leaderboard-table { width: 100%; border-collapse: collapse; }
+.leaderboard-table caption { caption-side: bottom; padding: 14px 24px; color: #b8c2d2; font-size: 12px; }
+.leaderboard-table thead { background: #202b40; color: #c6cfdd; }
+.leaderboard-table th, .leaderboard-table td { padding: 18px 20px; border-bottom: 1px solid #354159; text-align: left; font-size: 14px; }
+.leaderboard-table thead th { font-weight: 500; white-space: nowrap; }
+.leaderboard-table tbody th { font-weight: 500; }
+.leaderboard-table tr:last-child td, .leaderboard-table tr:last-child th { border-bottom: 0; }
+.leaderboard-table td:last-child, .leaderboard-table th:last-child { text-align: right; }
+.leaderboard-rank { display: inline-grid; place-items: center; min-width: 34px; height: 34px; border-radius: 8px; color: #c6cfdd; background: #253148; }
+.leaderboard-top-rank .leaderboard-rank { background: #3b3678; color: #ddd9ff; }
+.leaderboard-table .leaderboard-points { color: #b4afff; font-weight: 600; font-variant-numeric: tabular-nums; }
+.leaderboard-empty { padding: 40px 24px; text-align: center; }
+.leaderboard-empty h3 { font-size: 20px; }
+.leaderboard-empty p, .leaderboard-note { color: #b8c2d2; }
+.leaderboard-note { font-size: 12px; margin-top: 18px; }
+@media (max-width: 650px) {
+    .leaderboard-container { margin-top: 28px; padding: 0 16px; }
+    .leaderboard-heading { align-items: start; flex-direction: column; gap: 14px; }
+    .leaderboard-heading h1 { font-size: 29px; }
+    .leaderboard-filters { padding: 18px; }
+    .leaderboard-filters > div { flex-basis: 100%; min-width: 0; }
+    .leaderboard-results-heading { padding: 20px 16px; }
+    .leaderboard-results-heading h2 { font-size: 18px; }
+    .leaderboard-table th, .leaderboard-table td { padding: 14px 16px; }
+}

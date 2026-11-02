@@ -19,12 +19,43 @@
                     <li><a class="nav-item-link" asp-controller="Home" asp-action="Index">Home</a></li>
                     <li><a class="nav-item-link" asp-controller="Quests" asp-action="Quests">Quests</a></li>
                     <li><a class="nav-item-link" asp-controller="Leaderboard" asp-action="Leaderboard">Leaderboard</a></li>
-                    <li><a class="nav-item-link" asp-controller="Profile" asp-action="Profile">Profile</a></li>
                     <li><a class="nav-item-link" asp-controller="Sheets" asp-action="Index">Sheets</a></li>
                 </ul>
             </nav>
 
-        <a class="navbar-logo" asp-controller="Home" asp-action="Index">Logo</a>
+        <div class="navbar-auth">
+            <!-- identifies user and shows different options based on if they are logged in or not-->
+            @if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                <!-- eventually add a default picture users are assigned on login after implemented in DB-->
+               var profilePic = User.FindFirst("ProfilePicture")?.Value ?? Url.Content("~/images/default-profile.png");
+                
+                <div class="dropdown profile-dropdown">
+                    <a href="#" class="profile-dropdown-toggle" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="@profilePic" alt="Profile" class="profile-avatar-img" />
+                    </a>
+                    <!-- dropdown menu for profile options, yet to implement settings and logout-->
+                    <ul class="dropdown-menu dropdown-menu-end custom-dropdown-menu" aria-labelledby="profileDropdownMenuLink">
+                        <li><a class="dropdown-item" asp-controller="Profile" asp-action="Profile">Profile</a></li>
+                        <li><a class="dropdown-item" asp-controller="Profile" asp-action="Settings">Settings</a></li>
+                        <li><hr class="dropdown-divider bg-secondary"></li>
+                        <li>
+                            <form class="form-inline" asp-controller="#" asp-action="Logout" method="post">
+                                <button type="submit" class="dropdown-item text-danger">Logout</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            }
+            else
+            {
+                <!-- eventual redirects to the login and register pages when they get implemented-->
+                <a class="navbar-login-btn" asp-controller="#" asp-action="Login">Login</a>
+                <a class="navbar-register-btn" asp-controller="#" asp-action="Register">Register</a>
+            }
+
+        </div>
+        </a>
        </div>
     </header>
 

@@ -49,78 +49,76 @@
                 }
                 else
                 {
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Difficulty</th>
-                                <th>Questions</th>
-                                <th>Points</th>
-                                <th>Created</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var quest in Model.MyQuests)
-                            {
-                                <tr>
-                                    <td>@quest.Title</td>
-                                    <td>@quest.Difficulty</td>
-                                    <td>@quest.QuestionCount</td>
-                                    <td>@quest.TotalPoints</td>
-                                    <td>@quest.CreatedAt.ToString("dd'/'MM'/'yyyy")</td>
-                                    <td>
-                                        <a asp-controller="Quests" asp-action="Edit" asp-route-id="@quest.Id">Edit</a> |
-                                        <a asp-controller="Quests" asp-action="Delete" asp-route-id="@quest.Id">Delete</a>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <div class="quests-grid">
+                        @foreach (var quest in Model.MyQuests)
+                        {
+                            <article class="quest-card">
+                                <h3 class="quest-card-title">@quest.Title</h3>
+                                <p class="quest-card-meta">@quest.Difficulty · @quest.TotalPoints pts</p>
+                                <p class="quest-card-meta">@quest.QuestionCount questions</p>
+                                <p class="quest-card-code">Created @quest.CreatedAt.ToString("dd'/'MM'/'yyyy")</p>
+                                <div class="quest-card-actions">
+                                    <a asp-controller="Quests" asp-action="Edit" asp-route-id="@quest.Id">Edit</a>
+                                    <a asp-controller="Quests" asp-action="Delete" asp-route-id="@quest.Id">Delete</a>
+                                </div>
+                            </article>
+                        }
+                    </div>
                 }
             </section>
         }
 
         @if (Model.ActiveSection == "explore")
         {
+        <section class="quests-section" data-bs-theme="dark">
+            <h2 class="quests-heading">All Quests</h2>
+            @if (Model.ExploreQuests.Count == 0)
+            {
+            <p>No quests found. Create one from the sidebar.</p>
+            }
+            else
+            {
+                <div class="quests-grid">
+                    @foreach (var quest in Model.ExploreQuests)
+                    {
+                    <partial name="_QuestCard" model="quest" />
+                    }
+                </div>
+            }
+        </section>
+
             <section class="quests-section">
                 <h2 class="quests-heading">Featured Quests</h2>
-                <div class="quests-row">
-                    @if (Model.FeaturedQuests.Count == 0)
-                    {
-                        @for (var i = 0; i < 4; i++)
-                        {
-                            <div class="quest-placeholder"></div>
-                        }
-                    }
-                    else
-                    {
+                @if (Model.FeaturedQuests.Count == 0)
+                {
+                    <p>No featured quests yet.</p>
+                }
+                else
+                {
+                    <div class="quests-row">
                         @foreach (var quest in Model.FeaturedQuests)
                         {
                             <partial name="_QuestCard" model="quest" />
                         }
-                    }
-                </div>
+                    </div>
+                }
             </section>
 
             <section class="quests-section">
                 <h2 class="quests-heading">Recommended Quests</h2>
-                <div class="quests-row">
-                    @if (Model.RecommendedQuests.Count == 0)
-                    {
-                        @for (var i = 0; i < 4; i++)
-                        {
-                            <div class="quest-placeholder"></div>
-                        }
-                    }
-                    else
-                    {
+                @if (Model.RecommendedQuests.Count == 0)
+                {
+                    <p>No recommended quests yet.</p>
+                }
+                else
+                {
+                    <div class="quests-row">
                         @foreach (var quest in Model.RecommendedQuests)
                         {
                             <partial name="_QuestCard" model="quest" />
                         }
-                    }
-                </div>
+                    </div>
+                }
             </section>
         }
 
@@ -128,22 +126,19 @@
         {
             <section class="quests-section">
                 <h2 class="quests-heading">Saved Quests</h2>
-                <div class="quests-grid">
-                    @if (Model.SavedQuests.Count == 0)
-                    {
-                        @for (var i = 0; i < 4; i++)
-                        {
-                            <div class="quest-placeholder"></div>
-                        }
-                    }
-                    else
-                    {
+                @if (Model.SavedQuests.Count == 0)
+                {
+                    <p>No saved quests yet.</p>
+                }
+                else
+                {
+                    <div class="quests-grid">
                         @foreach (var quest in Model.SavedQuests)
                         {
                             <partial name="_QuestCard" model="quest" />
                         }
-                    }
-                </div>
+                    </div>
+                }
             </section>
         }
         }
