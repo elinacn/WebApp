@@ -28,6 +28,13 @@ public class CreateQuestQuestionViewModel
     [StringLength(500, ErrorMessage = "Accepted answers can be at most 500 characters.")]
     public string? AcceptedAnswers { get; set; }
 
+    // Only used by "code" questions
+    [StringLength(2000, ErrorMessage = "Start code can be at most 2000 characters.")]
+    public string? StartCode { get; set; }
+
+    [StringLength(1000, ErrorMessage = "Accepted code can be at most 1000 characters.")]
+    public string? AcceptedCode { get; set; }
+
     [StringLength(1000, ErrorMessage = "Explaination can be at most 1000 characters.")]
     public string? Explaination { get; set; }
 }

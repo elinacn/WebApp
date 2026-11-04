@@ -1,0 +1,354 @@
+{
+    "questType": "quiz",
+    "id": "coding-basics",
+    "title": "Coding basics",
+    "description": "Fill in the missing code (____) to complete each method. The examples show what the finished method should return.",
+    "difficulty": "apprentice",
+    "questions": [
+        {
+            "id": "q1",
+            "type": "code",
+            "text": "Sum Two Numbers: Complete the method so it returns the sum of two integers.",
+            "points": 2,
+            "startCode": "public static int sum(int a, int b) {\n    return ____;\n}",
+            "acceptedAnswers": [
+                "a + b",
+                "b + a"
+            ],
+            "tests": [
+                {
+                    "input": [
+                        1,
+                        5
+                    ],
+                    "expected": 6
+                },
+                {
+                    "input": [
+                        -10,
+                        2
+                    ],
+                    "expected": -8
+                },
+                {
+                    "input": [
+                        -2,
+                        -3
+                    ],
+                    "expected": -5
+                }
+            ],
+            "explaination": "The + operator adds the two parameters. The order doesn't matter, so b + a works too."
+        },
+        {
+            "id": "q2",
+            "type": "code",
+            "text": "Is number even: Complete the method so it returns true if the number is even.",
+            "points": 2,
+            "startCode": "public static boolean isEven(int a) {\n    return ____;\n}",
+            "acceptedAnswers": [
+                "a % 2 == 0",
+                "0 == a % 2",
+                "(a % 2) == 0"
+            ],
+            "tests": [
+                {
+                    "input": [
+                        1
+                    ],
+                    "expected": false
+                },
+                {
+                    "input": [
+                        10
+                    ],
+                    "expected": true
+                },
+                {
+                    "input": [
+                        2
+                    ],
+                    "expected": true
+                }
+            ],
+            "explaination": "a % 2 is the remainder after dividing by 2. Even numbers leave no remainder, so a % 2 == 0 is true exactly when a is even."
+        },
+        {
+            "id": "q3",
+            "type": "code",
+            "text": "Find biggest number: Complete the method so it returns the bigger of the two numbers.",
+            "points": 2,
+            "startCode": "public static int biggestNumber(int a, int b) {\n    return ____;\n}",
+            "acceptedAnswers": [
+                "Math.max(a, b)",
+                "Math.max(b, a)",
+                "a > b ? a : b",
+                "a >= b ? a : b",
+                "b > a ? b : a",
+                "b >= a ? b : a",
+                "(a > b) ? a : b",
+                "(a >= b) ? a : b"
+            ],
+            "tests": [
+                {
+                    "input": [
+                        1,
+                        9
+                    ],
+                    "expected": 9
+                },
+                {
+                    "input": [
+                        6,
+                        7
+                    ],
+                    "expected": 7
+                },
+                {
+                    "input": [
+                        -3,
+                        -8
+                    ],
+                    "expected": -3
+                }
+            ],
+            "explaination": "Math.max(a, b) returns the larger value. The ternary a > b ? a : b does the same thing by hand."
+        },
+        {
+            "id": "q4",
+            "type": "code",
+            "text": "Find smallest number: Complete the method so it returns the smaller of the two numbers.",
+            "points": 2,
+            "startCode": "public static int smallestNumber(int a, int b) {\n    return ____;\n}",
+            "acceptedAnswers": [
+                "Math.min(a, b)",
+                "Math.min(b, a)",
+                "a < b ? a : b",
+                "a <= b ? a : b",
+                "b < a ? b : a",
+                "b <= a ? b : a",
+                "(a < b) ? a : b",
+                "(a <= b) ? a : b"
+            ],
+            "tests": [
+                {
+                    "input": [
+                        -1,
+                        5
+                    ],
+                    "expected": -1
+                },
+                {
+                    "input": [
+                        7,
+                        3
+                    ],
+                    "expected": 3
+                },
+                {
+                    "input": [
+                        -2,
+                        -8
+                    ],
+                    "expected": -8
+                }
+            ],
+            "explaination": "Math.min(a, b) returns the smaller value. The ternary a < b ? a : b does the same thing by hand."
+        },
+        {
+            "id": "q5",
+            "type": "code",
+            "text": "Square number: Complete the method so it returns the number squared.",
+            "points": 2,
+            "startCode": "public static int square(int a) {\n    return ____;\n}",
+            "acceptedAnswers": [
+                "a * a",
+                "(int) Math.pow(a, 2)"
+            ],
+            "tests": [
+                {
+                    "input": [
+                        3
+                    ],
+                    "expected": 9
+                },
+                {
+                    "input": [
+                        6
+                    ],
+                    "expected": 36
+                },
+                {
+                    "input": [
+                        -5
+                    ],
+                    "expected": 25
+                }
+            ],
+            "explaination": "Squaring means multiplying a number by itself: a * a. Math.pow returns a double, so it needs an (int) cast here."
+        },
+        {
+            "id": "q6",
+            "type": "code",
+            "text": "Is number zero: Complete the method so it returns true if the number is zero.",
+            "points": 2,
+            "startCode": "public static boolean isZero(int a) {\n    return ____;\n}",
+            "acceptedAnswers": [
+                "a == 0",
+                "0 == a"
+            ],
+            "tests": [
+                {
+                    "input": [
+                        -1
+                    ],
+                    "expected": false
+                },
+                {
+                    "input": [
+                        0
+                    ],
+                    "expected": true
+                },
+                {
+                    "input": [
+                        1
+                    ],
+                    "expected": false
+                }
+            ],
+            "explaination": "== compares two values and gives a boolean, so a == 0 is already the answer."
+        },
+        {
+            "id": "q7",
+            "type": "code",
+            "text": "1-n sum: Complete the loop so the method returns the sum of the numbers 1 to n.",
+            "points": 2,
+            "startCode": "public static int oneToNsum(int n) {\n    int sum = 0;\n    for (int i = 1; i <= n; i++) {\n        ____;\n    }\n    return sum;\n}",
+            "acceptedAnswers": [
+                "sum += i",
+                "sum = sum + i",
+                "sum = i + sum"
+            ],
+            "tests": [
+                {
+                    "input": [
+                        5
+                    ],
+                    "expected": 15
+                },
+                {
+                    "input": [
+                        2
+                    ],
+                    "expected": 3
+                },
+                {
+                    "input": [
+                        10
+                    ],
+                    "expected": 55
+                }
+            ],
+            "explaination": "Each pass through the loop adds the current number i to the running total, so sum += i (or sum = sum + i)."
+        },
+        {
+            "id": "q8",
+            "type": "code",
+            "text": "Minutes to seconds: Complete the method so it converts minutes to seconds.",
+            "points": 2,
+            "startCode": "public static double minutesInSeconds(double minutes) {\n    return ____;\n}",
+            "acceptedAnswers": [
+                "minutes * 60",
+                "60 * minutes"
+            ],
+            "tests": [
+                {
+                    "input": [
+                        5
+                    ],
+                    "expected": 300
+                },
+                {
+                    "input": [
+                        2
+                    ],
+                    "expected": 120
+                },
+                {
+                    "input": [
+                        3.5
+                    ],
+                    "expected": 210
+                }
+            ],
+            "explaination": "There are 60 seconds in a minute, so multiply by 60. The parameter is a double so that 3.5 minutes works."
+        },
+        {
+            "id": "q9",
+            "type": "code",
+            "text": "Length of String: Complete the method so it returns the length of the String.",
+            "points": 2,
+            "startCode": "public static int lengthOfString(String string) {\n    return ____;\n}",
+            "acceptedAnswers": [
+                "string.length()"
+            ],
+            "tests": [
+                {
+                    "input": [
+                        "Horse"
+                    ],
+                    "expected": 5
+                },
+                {
+                    "input": [
+                        "Super-duper-fantastic"
+                    ],
+                    "expected": 21
+                },
+                {
+                    "input": [
+                        "H e l l o !"
+                    ],
+                    "expected": 11
+                }
+            ],
+            "explaination": "length() returns the number of characters in a String, including spaces."
+        },
+        {
+            "id": "q10",
+            "type": "code",
+            "text": "Is String empty: Complete the method so it returns true if the String is empty.",
+            "points": 2,
+            "startCode": "public static boolean isStringEmpty(String string) {\n    return ____;\n}",
+            "acceptedAnswers": [
+                "string.isEmpty()",
+                "string.length() == 0",
+                "0 == string.length()",
+                "string.equals(\"\")",
+                "\"\".equals(string)"
+            ],
+            "tests": [
+                {
+                    "input": [
+                        ""
+                    ],
+                    "expected": true
+                },
+                {
+                    "input": [
+                        "empty"
+                    ],
+                    "expected": false
+                },
+                {
+                    "input": [
+                        " "
+                    ],
+                    "expected": false
+                }
+            ],
+            "explaination": "isEmpty() is true only for a String with no characters. \" \" contains a space, so it is not empty."
+        }
+    ]
+}

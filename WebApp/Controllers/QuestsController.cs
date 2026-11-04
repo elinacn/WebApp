@@ -20,7 +20,7 @@ namespace WebApp.Controllers;
  */
 public class QuestsController : Controller
 {
-    private static readonly string[] QuestionTypes = ["multipleChoice", "freeText"];
+    private static readonly string[] QuestionTypes = ["multipleChoice", "freeText", "code"];
 
     private readonly ILogger<QuestsController> _logger;
     private readonly SheetsDbContext _context;
@@ -326,6 +326,16 @@ public class QuestsController : Controller
                 continue;
             }
 
+            if (question.Type == "code")
+            {
+                var blanks = (question.StartCode ?? string.Empty).Split(CodeAnswerChecker.Blank).Length - 1;
+                if (blanks != 1)
+                    ModelState.AddModelError($"{prefix}.StartCode", $"The start code must contain exactly one {CodeAnswerChecker.Blank} blank.");
+                if (CodeAnswerChecker.SplitLines(question.AcceptedCode).Count == 0)
+                    ModelState.AddModelError($"{prefix}.AcceptedCode", "Add at least one accepted answer (one per line).");
+                continue;
+            }
+
             if (question.Type == "freeText")
             {
                 if (SplitAnswers(question.AcceptedAnswers).Count == 0)
@@ -365,12 +375,17 @@ public class QuestsController : Controller
             {
                 Position = i,
                 Type = source.Type,
-                Question = source.Question.Trim(),
+                Question = source.Question.Replace("\r\n", "\n").Trim(),
                 Points = source.Points,
                 Explaination = string.IsNullOrWhiteSpace(source.Explaination) ? null : source.Explaination.Trim()
             };
 
-            if (source.Type == "freeText")
+            if (source.Type == "code")
+            {
+                question.StartCode = (source.StartCode ?? string.Empty).Replace("\r\n", "\n").TrimEnd();
+                question.AcceptedCode = string.Join("\n", CodeAnswerChecker.SplitLines(source.AcceptedCode));
+            }
+            else if (source.Type == "freeText")
             {
                 question.AcceptedAnswers = string.Join(", ", SplitAnswers(source.AcceptedAnswers));
             }
@@ -408,6 +423,8 @@ public class QuestsController : Controller
                 Points = q.Points,
                 CorrectOptionId = q.CorrectOptionId ?? "a",
                 AcceptedAnswers = q.AcceptedAnswers,
+                StartCode = q.StartCode,
+                AcceptedCode = q.AcceptedCode,
                 Explaination = q.Explaination,
                 Options = q.Options
                     .Select(o => new CreateQuestOptionViewModel { Id = o.OptionKey, Text = o.Text })

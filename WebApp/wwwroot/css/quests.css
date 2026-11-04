@@ -368,3 +368,10 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Start code and accepted code in the create form */
+.quests-create-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre;
+  tab-size: 4;
+}

@@ -9,3 +9,5 @@
 
 # macOS Finder metadata
 .DS_Store
+
+.SheetsDB.db

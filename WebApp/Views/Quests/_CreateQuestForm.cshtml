@@ -87,6 +87,7 @@
                         <select asp-for="NewQuest.Questions[i].Type">
                             <option value="multipleChoice">multipleChoice</option>
                             <option value="freeText">freeText</option>
+                            <option value="code">code</option>
                         </select>
                         <span asp-validation-for="NewQuest.Questions[i].Type" class="quests-validation"></span>
                     </label>
@@ -122,6 +123,18 @@
                         acceptedAnswers
                         <input asp-for="NewQuest.Questions[i].AcceptedAnswers" placeholder="contains()" />
                         <span asp-validation-for="NewQuest.Questions[i].AcceptedAnswers" class="quests-validation"></span>
+                    </label>
+                    <label class="quests-create-field quests-create-field-wide">
+                        startCode (code questions: mark the blank with ____)
+                        <textarea asp-for="NewQuest.Questions[i].StartCode" rows="5" class="quests-create-code" spellcheck="false"
+                                  placeholder="public static int sum(int a, int b) {&#10;    return ____;&#10;}"></textarea>
+                        <span asp-validation-for="NewQuest.Questions[i].StartCode" class="quests-validation"></span>
+                    </label>
+                    <label class="quests-create-field quests-create-field-wide">
+                        acceptedCode (one accepted fill-in per line)
+                        <textarea asp-for="NewQuest.Questions[i].AcceptedCode" rows="3" class="quests-create-code" spellcheck="false"
+                                  placeholder="a + b&#10;b + a"></textarea>
+                        <span asp-validation-for="NewQuest.Questions[i].AcceptedCode" class="quests-validation"></span>
                     </label>
                     <label class="quests-create-field quests-create-field-wide">
                         explaination

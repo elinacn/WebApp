@@ -117,6 +117,10 @@ namespace WebApp.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("AcceptedCode")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("CorrectOptionId")
                         .HasMaxLength(10)
                         .HasColumnType("TEXT");
@@ -137,6 +141,10 @@ namespace WebApp.Migrations
                     b.Property<string>("Question")
                         .IsRequired()
                         .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("StartCode")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Type")

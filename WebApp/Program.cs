@@ -41,6 +41,7 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<SheetsDbContext>();
     context.Database.Migrate();
     UserSeeder.Seed(context, app.Logger);
+    QuestSeeder.Seed(context, Path.Combine(app.Environment.ContentRootPath, "Tasks"), app.Logger);
 }
 
 // This middleware will handle exceptions and redirect to the    
