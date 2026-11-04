@@ -27,4 +27,8 @@
         </div>
         <p class="quest-card-progress">@Model.ProgressPercent%</p>
     }
+
+    <div class="quest-card-play">
+        <a class="quests-apply" asp-controller="Quests" asp-action="Play" asp-route-id="@Model.Id">Start</a>
+    </div>
 </article>

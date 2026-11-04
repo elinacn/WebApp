@@ -1,0 +1,97 @@
+@using WebApp.ViewModels
+@model PlayQuestViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<link rel="stylesheet" href="~/css/quests.css" asp-append-version="true" />
+
+<div class="quests-page">
+    <div class="quests-main">
+        <section class="quests-create-panel">
+            <h2 class="quests-heading">@Model.Title</h2>
+            <p class="quests-create-hint">@Model.Difficulty</p>
+            @if (!string.IsNullOrWhiteSpace(Model.Description))
+            {
+                <p class="quests-create-hint">@Model.Description</p>
+            }
+
+            @* GROUPMATE: the points/score summary for Model.Submitted can go here.
+               Each question has q.IsCorrect and q.Points. *@
+
+            <form class="quests-create-form" method="post" asp-controller="Quests" asp-action="Play" asp-route-id="@Model.Id">
+                @for (var i = 0; i < Model.Questions.Count; i++)
+                {
+                    var q = Model.Questions[i];
+
+                    <fieldset class="quests-create-block" disabled="@Model.Submitted">
+                        <div class="quests-q-header">
+                            <h4 class="quests-q-title">Question @(i + 1)</h4>
+                            @if (Model.Submitted)
+                            {
+                                <span class="quests-play-badge @(q.IsCorrect ? "is-correct" : "is-wrong")">
+                                    @(q.IsCorrect ? "Correct" : "Incorrect")
+                                </span>
+                            }
+                        </div>
+
+                        <p class="quests-play-question">@q.Question</p>
+                        <input type="hidden" name="answers[@i].QuestionId" value="@q.Id" />
+
+                        @if (q.Type == "freeText")
+                        {
+                            <input type="text" class="quests-play-text"
+                                   name="answers[@i].Text"
+                                   value="@q.TextAnswer"
+                                   placeholder="Your answer"
+                                   autocomplete="off" />
+
+                            @if (Model.Submitted && !q.IsCorrect)
+                            {
+                                <p class="quests-play-answer">Accepted answer(s): @string.Join(", ", q.AcceptedAnswers)</p>
+                            }
+                        }
+                        else
+                        {
+                            <p class="quests-create-hint-inline">@(q.AllowMultiple ? "Select all that apply." : "Select one.")</p>
+                            <div class="quests-option-list">
+                                @foreach (var option in q.Options)
+                                {
+                                    var isSelected = q.SelectedKeys.Contains(option.Key);
+                                    var isCorrectOption = Model.Submitted && q.CorrectKeys.Contains(option.Key);
+                                    var isWrongPick = Model.Submitted && isSelected && !isCorrectOption;
+
+                                    <label class="quests-play-option @(isCorrectOption ? "is-correct" : null) @(isWrongPick ? "is-wrong" : null)">
+                                        <input type="@(q.AllowMultiple ? "checkbox" : "radio")"
+                                               name="answers[@i].Selected"
+                                               value="@option.Key"
+                                               checked="@isSelected" />
+                                        <span>@option.Text</span>
+                                    </label>
+                                }
+                            </div>
+                        }
+
+                        @if (Model.Submitted && !string.IsNullOrWhiteSpace(q.Explanation))
+                        {
+                            <p class="quests-play-explanation">@q.Explanation</p>
+                        }
+                    </fieldset>
+                }
+
+                <div class="quests-create-actions">
+                    @if (!Model.Submitted)
+                    {
+                        <button class="quests-apply" type="submit">Submit answers</button>
+                        <a class="quests-reset" asp-controller="Quests" asp-action="Quests" asp-route-section="library">Cancel</a>
+                    }
+                    else
+                    {
+                        <a class="quests-apply" asp-controller="Quests" asp-action="Play" asp-route-id="@Model.Id">Try again</a>
+                        <a class="quests-reset" asp-controller="Quests" asp-action="Quests" asp-route-section="explore">Back to quests</a>
+                    }
+                </div>
+            </form>
+        </section>
+    </div>
+</div>

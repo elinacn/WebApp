@@ -570,3 +570,124 @@ display: none !important;
 .quests-create-block {
   scroll-margin-top: 110px;
 }
+
+
+/* ---- Playing a quest ---- */
+a.quests-apply,
+a.quests-apply:hover {
+  color: #ffffff;
+}
+
+.quests-play-question {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: pre-wrap;
+}
+
+.quests-play-text {
+  background-color: #111827;
+  color: #ffffff;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.quests-play-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background-color: #111827;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  color: #e5e7eb;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.quests-play-option:hover {
+  border-color: #8B5CF6;
+}
+
+.quests-play-option.is-correct {
+  border-color: #34d399;
+  background-color: rgba(52, 211, 153, 0.12);
+}
+
+.quests-play-option.is-wrong {
+  border-color: #f87171;
+  background-color: rgba(248, 113, 113, 0.12);
+}
+
+fieldset[disabled] .quests-play-option {
+  cursor: default;
+  color: #e5e7eb;
+}
+
+fieldset[disabled] .quests-play-option:hover {
+  border-color: #374151;
+}
+
+fieldset[disabled] .quests-play-option.is-correct:hover {
+  border-color: #34d399;
+}
+
+fieldset[disabled] .quests-play-option.is-wrong:hover {
+  border-color: #f87171;
+}
+
+.quests-play-text:disabled {
+  color: #ffffff;
+}
+
+.quests-play-badge {
+  margin-left: auto;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.quests-play-badge.is-correct {
+  color: #34d399;
+  border-color: #34d399;
+}
+
+.quests-play-badge.is-wrong {
+  color: #f87171;
+  border-color: #f87171;
+}
+
+.quests-play-answer,
+.quests-play-explanation {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #c4b5fd;
+}
+
+.quests-play-explanation {
+  color: #9ca3af;
+}
+
+/* Start button on the quest cards */
+.quest-card-play {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.quest-card-play .quests-apply {
+  width: 100%;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  box-sizing: border-box;
+}
+
+.quest-card-play + .quest-card-actions {
+  margin-top: 8px;
+}
