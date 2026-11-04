@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Extensions;
 using WebApp.Models;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +63,27 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthentication();   // reads the login cookie; must come before UseAuthorization
+// This middleware will helps us do testing on user functionality without having to implement a full authentication system yet. 
+app.Use(async (context, next) =>
+{
+    // Check if the user is already authenticated 
+    if (!context.User.Identity?.IsAuthenticated ?? true)
+    {
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, "TestUser"),
+            new Claim(ClaimTypes.Email, "test@example.com"),
+            // This matches the claim name used in _Layout.cshtml for the profile picture
+            new Claim("ProfilePicture", "https://via.placeholder.com/150") 
+        };
+
+        var identity = new ClaimsIdentity(claims, "MockCookieAuth");
+        context.User = new ClaimsPrincipal(identity);
+    }
+
+    await next();
+});
+
 app.UseAuthorization();
 
 app.MapStaticAssets();

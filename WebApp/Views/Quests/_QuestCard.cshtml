@@ -1,3 +1,4 @@
+@using WebApp.Models
 @using WebApp.ViewModels
 @model QuestCardViewModel
 
@@ -12,11 +13,18 @@
     </form>
 
     <h3 class="quest-card-title">@Model.Title</h3>
-    <p class="quest-card-code">@Model.CourseCode</p>
-    <p class="quest-card-meta">@Model.Difficulty · @Model.Points pts</p>
-    <p class="quest-card-status">@Model.Status</p>
-    <div class="quest-progress" aria-hidden="true">
-        <span class="quest-progress-fill" style="width: @(Model.ProgressPercent)%"></span>
-    </div>
-    <p class="quest-card-progress">@Model.ProgressPercent%</p>
+
+    @if (!string.IsNullOrEmpty(Model.CourseCode))
+    {
+        <p class="quest-card-code">@Model.CourseCode</p>
+    }
+    <p class="quest-card-meta">@(string.IsNullOrEmpty(Model.DifficultyLabel) ? Model.Difficulty.ToString() : Model.DifficultyLabel) · @Model.Points pts</p>
+    @if (Model.Status != QuestStatus.NotStarted)
+    {
+        <p class="quest-card-status">@Model.Status</p>
+        <div class="quest-progress" aria-hidden="true">
+            <span class="quest-progress-fill" style="width: @(Model.ProgressPercent)%"></span>
+        </div>
+        <p class="quest-card-progress">@Model.ProgressPercent%</p>
+    }
 </article>
