@@ -29,15 +29,18 @@ public class QuestsController : Controller
     private readonly ILogger<QuestsController> _logger;
     private readonly SheetsDbContext _context;
     private readonly DailyStreakService _streakService;
+    private readonly LeaderboardDbContext _leaderboardContext;
 
     public QuestsController(
-    ILogger<QuestsController> logger,
-    SheetsDbContext context,
-    DailyStreakService streakService)
+        ILogger<QuestsController> logger,
+        SheetsDbContext context,
+        DailyStreakService streakService,
+        LeaderboardDbContext leaderboardContext) 
     {
-    _logger = logger;
-    _context = context;
-    _streakService = streakService;
+        _logger = logger;
+        _context = context;
+        _streakService = streakService;
+        _leaderboardContext = leaderboardContext; 
     }
 
 
@@ -53,7 +56,6 @@ public class QuestsController : Controller
         var filter = new QuestFilterViewModel
         {
             SearchText = searchText,
-            Difficulty = difficulty
         };
 
         var newQuest = new CreateQuestViewModel();
@@ -589,7 +591,7 @@ public class QuestsController : Controller
     }
 
     // testing for leaderboard functionality, simulates a quest completion and logs the score to the leaderboard
-    [HttpPost]
+    [HttpGet]
     public async Task<IActionResult> SimulateQuest(int id = 1)
     {
         var quest = await _context.Quests
@@ -601,7 +603,6 @@ public class QuestsController : Controller
         var attempt = new QuestAttempt
         {
             StudentName = User.Identity?.Name ?? "TestUser",
-            Course = quest.Difficulty,
             QuestId = quest.Id,
             PointsEarned = quest.Questions.Sum(q => q.Points),
             CompletedAt = DateTime.UtcNow

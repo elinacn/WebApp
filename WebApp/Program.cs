@@ -16,6 +16,8 @@ builder.Services.AddDbContext<WebApp.Models.SheetsDbContext>(options =>
 builder.Services.AddDbContext<LeaderboardDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("LeaderboardDBContextConnection")));
 
+builder.Services.AddDbContext<LeaderboardDbContext>(options =>
+    options.UseSqlite("Data Source=SheetsDB.db"));
 
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
