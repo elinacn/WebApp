@@ -83,6 +83,104 @@ public class QuestsController : Controller
         return RedirectToAction(nameof(Quests));
     }
 
+    // Play
+    public async Task<IActionResult> Play(int? id)
+    {
+        if (id is null) return BadRequest();
+
+        var quest = await _context.Quests
+            .AsNoTracking()
+            .Include(q => q.Questions).ThenInclude(q => q.Options)
+            .FirstOrDefaultAsync(q => q.Id == id);
+        if (quest is null) return NotFound();
+
+        if (quest.Questions.Count == 0)
+        {
+            TempData["Error"] = "This quest has no questions yet.";
+            return RedirectToAction(nameof(Quests), new { section = "library" });
+        }
+
+        return View(ToPlayModel(quest));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Play(int id, List<PlayAnswerInput>? answers)
+    {
+        answers ??= [];
+
+        var quest = await _context.Quests
+            .AsNoTracking()
+            .Include(q => q.Questions).ThenInclude(q => q.Options)
+            .FirstOrDefaultAsync(q => q.Id == id);
+        if (quest is null) return NotFound();
+
+        var model = ToPlayModel(quest);
+        model.Submitted = true;
+
+        foreach (var question in model.Questions)
+        {
+            var source = quest.Questions.First(q => q.Id == question.Id);
+            var answer = answers.FirstOrDefault(a => a.QuestionId == question.Id);
+
+            question.Explanation = source.Explaination;
+            question.TextAnswer = answer?.Text;
+            question.SelectedKeys = (answer?.Selected ?? [])
+                .Where(k => !string.IsNullOrWhiteSpace(k))
+                .Distinct()
+                .ToList();
+
+            if (source.Type == "freeText")
+            {
+                var accepted = (source.AcceptedAnswers ?? string.Empty)
+                    .Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                var comparison = source.CaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+                var given = (answer?.Text ?? string.Empty).Trim();
+
+                question.AcceptedAnswers = accepted.ToList();
+                question.IsCorrect = given.Length > 0 && accepted.Any(a => string.Equals(a, given, comparison));
+            }
+            else
+            {
+                var correct = (source.CorrectOptionId ?? string.Empty)
+                    .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                    .ToList();
+
+                question.CorrectKeys = correct;
+                question.IsCorrect = question.SelectedKeys.Count > 0
+                    && question.SelectedKeys.Count == correct.Count
+                    && !question.SelectedKeys.Except(correct).Any();
+            }
+        }
+
+        ModelState.Clear();
+        return View(model);
+    }
+
+    private static PlayQuestViewModel ToPlayModel(Quest quest) => new()
+    {
+        Id = quest.Id,
+        Title = quest.Title,
+        Description = quest.Description,
+        Difficulty = quest.Difficulty,
+        Questions = quest.Questions
+            .OrderBy(q => q.Position)
+            .Select(q => new PlayQuestionViewModel
+            {
+                Id = q.Id,
+                Type = q.Type,
+                Question = q.Question,
+                Points = q.Points,
+                AllowMultiple = (q.CorrectOptionId ?? string.Empty)
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries).Length > 1,
+                Options = q.Options
+                    .OrderBy(o => o.OptionKey, StringComparer.Ordinal)
+                    .Select(o => new PlayOptionViewModel { Key = o.OptionKey, Text = o.Text })
+                    .ToList()
+            })
+            .ToList()
+    };
+
     // Create
     [HttpPost]
     [ValidateAntiForgeryToken]
