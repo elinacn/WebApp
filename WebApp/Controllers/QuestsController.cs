@@ -24,11 +24,12 @@ public class QuestsController : Controller
 
     private readonly ILogger<QuestsController> _logger;
     private readonly SheetsDbContext _context;
-
-    public QuestsController(ILogger<QuestsController> logger, SheetsDbContext context)
+    private readonly LeaderboardDbContext _leaderboardContext;
+    public QuestsController(ILogger<QuestsController> logger, SheetsDbContext context, LeaderboardDbContext leaderboardContext)
     {
         _logger = logger;
         _context = context;
+        _leaderboardContext = leaderboardContext;
     }
 
     public async Task<IActionResult> Quests(string section = "library", string? searchText = null, Difficulty? difficulty = null)
@@ -79,6 +80,32 @@ public class QuestsController : Controller
 
         // DATABASE HOOK: connect the database here, for saving quests type shi
         return RedirectToAction(nameof(Quests));
+    }
+
+    // triggers when student completes a quest to record score
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CompletedQuest(int questId)
+    {
+        var quest = await _context.Quests
+            .Include(q => q.Questions)
+            .FirstOrDefaultAsync(q => q.Id == questId);
+
+            if (quest is null) return NotFound();
+
+            var attempt = new QuestAttempt
+            {
+                StudentName = User.Identity?.Name ?? "Anonymous",
+                Course = quest.Difficulty, 
+                QuestId = quest.Id,
+                PointsEarned = quest.Questions.Sum(q => q.Points),
+                CompletedAt = DateTime.UtcNow
+            };
+
+            _leaderboardContext.QuestAttempts.Add(attempt);
+            await _leaderboardContext.SaveChangesAsync();
+
+            return RedirectToAction("Leaderboard", "Leaderboard");
     }
 
     // Create
@@ -438,5 +465,28 @@ public class QuestsController : Controller
         return [];
     }
 
+    // testing for leaderboard functionality, simulates a quest completion and logs the score to the leaderboard
+    [HttpPost]
+    public async Task<IActionResult> SimulateQuest(int id = 1)
+    {
+        var quest = await _context.Quests
+            .Include(q => q.Questions)
+            .FirstOrDefaultAsync(q => q.Id == id);
     
+        if (quest is null) return Content("Quest not found. Create a quest first.");
+    
+        var attempt = new QuestAttempt
+        {
+            StudentName = User.Identity?.Name ?? "TestUser",
+            Course = quest.Difficulty,
+            QuestId = quest.Id,
+            PointsEarned = quest.Questions.Sum(q => q.Points),
+            CompletedAt = DateTime.UtcNow
+        };
+    
+        _leaderboardContext.QuestAttempts.Add(attempt);
+        await _leaderboardContext.SaveChangesAsync();
+    
+        return RedirectToAction("Leaderboard", "Leaderboard");
+    }
 }

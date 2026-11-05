@@ -7,16 +7,21 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 // Add services to the container.
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<WebApp.Models.SheetsDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SheetsDBContextConnection")));
-
+    
+builder.Services.AddDbContext<LeaderboardDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("LeaderboardDBContextConnection")));
 
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     scope.ServiceProvider.GetRequiredService<SheetsDbContext>().Database.Migrate();
+    scope.ServiceProvider.GetRequiredService<LeaderboardDbContext>().Database.Migrate();
 }
+
 
 // This middleware will handle exceptions and redirect to the    
 // Error action in the Home controller as long as the application is not in development mode.
