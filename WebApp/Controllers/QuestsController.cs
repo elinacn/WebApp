@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
 using WebApp.ViewModels;
+using WebApp.Services;
+using System.Security.Claims;
 
 namespace WebApp.Controllers;
 
@@ -26,12 +28,18 @@ public class QuestsController : Controller
 
     private readonly ILogger<QuestsController> _logger;
     private readonly SheetsDbContext _context;
+    private readonly DailyStreakService _streakService;
 
-    public QuestsController(ILogger<QuestsController> logger, SheetsDbContext context)
+    public QuestsController(
+    ILogger<QuestsController> logger,
+    SheetsDbContext context,
+    DailyStreakService streakService)
     {
-        _logger = logger;
-        _context = context;
+    _logger = logger;
+    _context = context;
+    _streakService = streakService;
     }
+
 
     public async Task<IActionResult> Quests(string section = "library", string? searchText = null, Difficulty? difficulty = null)
     {
@@ -152,6 +160,16 @@ public class QuestsController : Controller
                     && !question.SelectedKeys.Except(correct).Any();
             }
         }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.Identity?.Name;
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        await _streakService.RecordActivityAsync(userId);
 
         ModelState.Clear();
         return View(model);
