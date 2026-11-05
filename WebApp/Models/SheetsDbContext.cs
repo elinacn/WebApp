@@ -9,6 +9,9 @@ namespace WebApp.Models
         }
         public DbSet<Sheet> Sheets { get; set; }
 
+        // For the Streaks
+        public DbSet<DailyStreaks> DailyStreaks { get; set; }
+
         // For creating quests
         public DbSet<Quest> Quests { get; set; }
         public DbSet<QuestQuestion> QuestQuestions { get; set; }
@@ -19,6 +22,8 @@ namespace WebApp.Models
         // Enforce unique titles at the database level too
         modelBuilder.Entity<Sheet>().HasIndex(s => s.Title).IsUnique();
         modelBuilder.Entity<Quest>().HasIndex(q => q.Title).IsUnique();
+        modelBuilder.Entity<DailyStreaks>().HasIndex(a => new { a.UserId, a.ActivityDate }).IsUnique();
+        
     }
     }
 }
