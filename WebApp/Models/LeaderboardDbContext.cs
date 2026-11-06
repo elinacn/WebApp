@@ -19,6 +19,6 @@ public class LeaderboardDbContext : DbContext
 
         // adds an index on StudentName and Course to make search and ranking queries faster
         modelBuilder.Entity<QuestAttempt>()
-            .HasIndex(q => new { q.StudentName, q.Course });
+            .HasIndex(q => new { q.StudentName });
     }
 }

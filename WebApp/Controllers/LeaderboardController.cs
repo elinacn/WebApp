@@ -48,12 +48,9 @@ public class LeaderboardController : Controller
         var model = new LeaderboardViewModel
         {
             Search = search?.Trim() ?? string.Empty,
-            Course = course?.Trim() ?? string.Empty,
-            Courses = availableCourses
         };
 
         var ranked = rawEntries
-            .Where(s => model.Course.Length == 0 || s.Course == model.Course)
             .OrderByDescending(s => s.Points)
             .ThenBy(s => s.Name)
             .ToList();
