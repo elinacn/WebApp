@@ -5,7 +5,9 @@
     int streakCount = 5;
     int totalXp = 1250;
     string rankName = "Noob";
-    int rankPoints = 67;
+
+    // The signed-in user's code points from completed quests (set by HomeController)
+    int rankPoints = ViewData["CodePoints"] as int? ?? 0;
 }
 
 <div class="home-container">

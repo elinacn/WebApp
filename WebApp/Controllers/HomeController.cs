@@ -1,13 +1,25 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using WebApp.Extensions;
 using WebApp.Models;
 
 namespace WebApp.Controllers;
 
 public class HomeController : Controller
 {
-    public IActionResult Index()
+    private readonly SheetsDbContext _context;
+
+    public HomeController(SheetsDbContext context)
     {
+        _context = context;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        // The signed-in user's code points from completed quests (0 for visitors)
+        var userId = User.GetUserId();
+        var user = userId is null ? null : await _context.Users.FindAsync(userId);
+        ViewData["CodePoints"] = user?.Points ?? 0;
         return View();
     }
 

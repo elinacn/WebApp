@@ -45,6 +45,27 @@ namespace WebApp.Migrations
                     b.ToTable("Courses");
                 });
 
+            modelBuilder.Entity("WebApp.Models.DailyStreaks", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly>("ActivityDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ActivityDate")
+                        .IsUnique();
+
+                    b.ToTable("DailyStreaks");
+                });
+
             modelBuilder.Entity("WebApp.Models.Quest", b =>
                 {
                     b.Property<int>("Id")
@@ -79,6 +100,43 @@ namespace WebApp.Migrations
                         .IsUnique();
 
                     b.ToTable("Quests");
+                });
+
+            modelBuilder.Entity("WebApp.Models.QuestCompletion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("BestScore")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("FirstCompletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("LastCompletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MaxScore")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("QuestId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestId");
+
+                    b.HasIndex("UserId", "QuestId")
+                        .IsUnique();
+
+                    b.ToTable("QuestCompletions");
                 });
 
             modelBuilder.Entity("WebApp.Models.QuestOption", b =>
@@ -214,6 +272,25 @@ namespace WebApp.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Course");
+                });
+
+            modelBuilder.Entity("WebApp.Models.QuestCompletion", b =>
+                {
+                    b.HasOne("WebApp.Models.Quest", "Quest")
+                        .WithMany()
+                        .HasForeignKey("QuestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebApp.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Quest");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("WebApp.Models.QuestOption", b =>

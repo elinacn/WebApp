@@ -10,7 +10,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 // Add services to the container.
+
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<WebApp.Services.DailyStreakService>();
+builder.Services.AddScoped<WebApp.Services.QuestScoringService>();
 builder.Services.AddDbContext<WebApp.Models.SheetsDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SheetsDBContextConnection")));
 
@@ -71,6 +74,7 @@ using (var scope = app.Services.CreateScope())
     UserSeeder.Seed(context, app.Logger);
     QuestSeeder.Seed(context, Path.Combine(app.Environment.ContentRootPath, "Tasks"), app.Logger);
 }
+
 
 // This middleware will handle exceptions and redirect to the    
 // Error action in the Home controller as long as the application is not in development mode.

@@ -10,4 +10,8 @@
 # macOS Finder metadata
 .DS_Store
 
-.SheetsDB.db
+# SQLite database and its temporary side files (SheetsDB.db itself is still
+# tracked, so this line only takes effect if it is ever removed with git rm --cached)
+SheetsDB.db
+SheetsDB.db-shm
+SheetsDB.db-wal
