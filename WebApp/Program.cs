@@ -65,7 +65,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 
-
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {

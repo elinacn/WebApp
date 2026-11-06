@@ -54,7 +54,6 @@ public class QuestsController : Controller
         var filter = new QuestFilterViewModel
         {
             SearchText = searchText,
-            Difficulty = difficulty
         };
 
         var newQuest = new CreateQuestViewModel();
