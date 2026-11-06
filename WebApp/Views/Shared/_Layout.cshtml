@@ -15,48 +15,43 @@
         <div class="navbar-container">
             <nav class="navbar-menu" itemid="navbarMenu">
                 <ul class="navbar-links">
-                    <!-- eventual redirects to the other pages when they get implemented-->
                     <li><a class="nav-item-link" asp-controller="Home" asp-action="Index">Home</a></li>
                     <li><a class="nav-item-link" asp-controller="Quests" asp-action="Quests">Quests</a></li>
                     <li><a class="nav-item-link" asp-controller="Leaderboard" asp-action="Leaderboard">Leaderboard</a></li>
-                    <li><a class="nav-item-link" asp-controller="Sheets" asp-action="Index">Sheets</a></li>
+                    <li><a class="nav-item-link" asp-controller="Users" asp-action="Index">Users</a></li>
+                    <li><a class="nav-item-link" asp-controller="Courses" asp-action="Index">Courses</a></li>
                 </ul>
             </nav>
 
-        <div class="navbar-auth">
-            <!-- identifies user and shows different options based on if they are logged in or not-->
-            @if (User.Identity != null && User.Identity.IsAuthenticated)
-            {
-                <!-- eventually add a default picture users are assigned on login after implemented in DB-->
-               var profilePic = User.FindFirst("ProfilePicture")?.Value ?? Url.Content("~/images/default-profile.png");
-                
-                <div class="dropdown profile-dropdown">
-                    <a href="#" class="profile-dropdown-toggle" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="@profilePic" alt="Profile" class="profile-avatar-img" />
-                    </a>
-                    <!-- dropdown menu for profile options, yet to implement settings and logout-->
-                    <ul class="dropdown-menu dropdown-menu-end custom-dropdown-menu" aria-labelledby="profileDropdownMenuLink">
-                        <li><a class="dropdown-item" asp-controller="Profile" asp-action="Profile">Profile</a></li>
-                        <li><a class="dropdown-item" asp-controller="Profile" asp-action="Settings">Settings</a></li>
-                        <li><hr class="dropdown-divider bg-secondary"></li>
-                        <li>
-                            <form class="form-inline" asp-controller="#" asp-action="Logout" method="post">
-                                <button type="submit" class="dropdown-item text-danger">Logout</button>
-                            </form>
-                        </li>
-                    </ul>
-                </div>
-            }
-            else
-            {
-                <!-- eventual redirects to the login and register pages when they get implemented-->
-                <a class="navbar-login-btn" asp-controller="#" asp-action="Login">Login</a>
-                <a class="navbar-register-btn" asp-controller="#" asp-action="Register">Register</a>
-            }
-
+            <div class="navbar-auth">
+                <!-- shows the profile menu when signed in, otherwise a sign-in button -->
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <!-- users don't have their own pictures yet, so everyone gets the default one -->
+                    <div class="dropdown profile-dropdown">
+                        <a href="#" class="profile-dropdown-toggle" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="~/images/default-profile.svg" alt="Profile menu for @User.Identity.Name" class="profile-avatar-img" />
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end custom-dropdown-menu" aria-labelledby="profileDropdown">
+                            <li><span class="dropdown-item-text navbar-user">Signed in as <strong>@User.Identity.Name</strong></span></li>
+                            <li><hr class="dropdown-divider bg-secondary"></li>
+                            <li><a class="dropdown-item" asp-controller="Profile" asp-action="Profile">Profile</a></li>
+                            <li><hr class="dropdown-divider bg-secondary"></li>
+                            <li>
+                                <form asp-controller="Account" asp-action="Logout" method="post">
+                                    <button type="submit" class="dropdown-item text-danger">Sign out</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <a class="navbar-login-btn" asp-controller="Account" asp-action="Login">Sign in</a>
+                }
+                <a class="navbar-logo" asp-controller="Home" asp-action="Index">Logo</a>
+            </div>
         </div>
-        </a>
-       </div>
     </header>
 
     <div class="main-content-wrapper">

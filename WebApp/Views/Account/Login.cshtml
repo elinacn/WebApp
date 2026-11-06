@@ -1,0 +1,36 @@
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@{
+    ViewData["Title"] = "Sign in";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+}
+
+<div class="container py-4 text-light" data-bs-theme="dark" style="max-width: 480px;">
+    <h1>Sign in</h1>
+
+    <form asp-action="Login" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input id="username" name="username" class="form-control" value="@ViewData["Username"]"
+                   autocomplete="username" required autofocus />
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input id="password" name="password" type="password" class="form-control"
+                   autocomplete="current-password" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Sign in</button>
+    </form>
+
+    @if (Env.IsDevelopment())
+    {
+        <p class="mt-4 text-secondary small">
+            Development only: the demo users (anna, beatrice, calvin, …) use the password
+            <code>@UserSeeder.DemoPassword</code>.
+        </p>
+    }
+</div>

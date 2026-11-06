@@ -16,8 +16,32 @@
                 <p class="quests-create-hint">@Model.Description</p>
             }
 
-            @* GROUPMATE: the points/score summary for Model.Submitted can go here.
-               Each question has q.IsCorrect and q.Points. *@
+            @if (Model.Submitted)
+            {
+                var result = Model.Result;
+                <div class="quests-play-result" role="status">
+                    @if (result is null)
+                    {
+                        <p class="text-danger">@Model.ResultError</p>
+                    }
+                    else
+                    {
+                        <p class="quests-play-score">You scored <strong>@result.Score of @result.MaxScore</strong> points.</p>
+                        @if (result.PointsAwarded > 0)
+                        {
+                            <p>+@result.PointsAwarded code points! You now have @result.TotalPoints in total.</p>
+                        }
+                        else if (result.FirstCompletion)
+                        {
+                            <p>No code points this time. Try again to earn some.</p>
+                        }
+                        else
+                        {
+                            <p>No new code points: your best on this quest is @result.BestScore of @result.MaxScore. Beat it to earn the difference.</p>
+                        }
+                    }
+                </div>
+            }
 
             <form class="quests-create-form" method="post" asp-controller="Quests" asp-action="Play" asp-route-id="@Model.Id">
                 @for (var i = 0; i < Model.Questions.Count; i++)
@@ -49,6 +73,26 @@
                             @if (Model.Submitted && !q.IsCorrect)
                             {
                                 <p class="quests-play-answer">Accepted answer(s): @string.Join(", ", q.AcceptedAnswers)</p>
+                            }
+                        }
+                        else if (q.Type == "code")
+                        {
+                            <pre class="quests-play-code">@q.StartCode</pre>
+                            <input type="text" class="quests-play-text quests-play-code-input"
+                                   name="answers[@i].Text"
+                                   value="@q.TextAnswer"
+                                   placeholder="Code for the ____ blank"
+                                   autocomplete="off" spellcheck="false" />
+
+                            @if (Model.Submitted && !q.IsCorrect)
+                            {
+                                <p class="quests-play-answer">
+                                    Accepted answer(s):
+                                    @for (var a = 0; a < q.AcceptedAnswers.Count; a++)
+                                    {
+                                        @(a > 0 ? " or " : "")<code>@q.AcceptedAnswers[a]</code>
+                                    }
+                                </p>
                             }
                         }
                         else
