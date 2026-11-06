@@ -65,9 +65,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 
-builder.Services.AddDbContext<LeaderboardDbContext>(options =>
-    options.UseSqlite("Data Source=SheetsDB.db"));
-
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {

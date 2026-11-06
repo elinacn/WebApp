@@ -27,18 +27,6 @@ public class QuestsController : Controller
     private readonly ILogger<QuestsController> _logger;
     private readonly SheetsDbContext _context;
     private readonly DailyStreakService _streakService;
-    private readonly LeaderboardDbContext _leaderboardContext;
-
-    public QuestsController(
-        ILogger<QuestsController> logger,
-        SheetsDbContext context,
-        DailyStreakService streakService,
-        LeaderboardDbContext leaderboardContext) 
-    {
-        _logger = logger;
-        _context = context;
-        _streakService = streakService;
-        _leaderboardContext = leaderboardContext; 
     private readonly QuestScoringService _scoringService;
 
     public QuestsController(
@@ -648,29 +636,5 @@ public class QuestsController : Controller
     {
         // DATABASE HOOK: connect the database here. 
         return [];
-    }
-
-    // testing for leaderboard functionality, simulates a quest completion and logs the score to the leaderboard
-    [HttpGet]
-    public async Task<IActionResult> SimulateQuest(int id = 1)
-    {
-        var quest = await _context.Quests
-            .Include(q => q.Questions)
-            .FirstOrDefaultAsync(q => q.Id == id);
-    
-        if (quest is null) return Content("Quest not found. Create a quest first.");
-    
-        var attempt = new QuestAttempt
-        {
-            StudentName = User.Identity?.Name ?? "TestUser",
-            QuestId = quest.Id,
-            PointsEarned = quest.Questions.Sum(q => q.Points),
-            CompletedAt = DateTime.UtcNow
-        };
-    
-        _leaderboardContext.QuestAttempts.Add(attempt);
-        await _leaderboardContext.SaveChangesAsync();
-    
-        return RedirectToAction("Leaderboard", "Leaderboard");
     }
 }
