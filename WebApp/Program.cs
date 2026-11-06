@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Extensions;
 using WebApp.Models;
-using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,18 +22,45 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
 
-        // Sign out anyone whose user has been deleted since they signed in
+        // On every request: sign out anyone whose user has been deleted since they
+        // signed in, and record when the user was last seen (at most once a minute)
         options.Events.OnValidatePrincipal = async context =>
         {
             var userId = context.Principal?.GetUserId();
             var db = context.HttpContext.RequestServices.GetRequiredService<SheetsDbContext>();
-            if (userId is null || !await db.Users.AnyAsync(u => u.Id == userId))
+            var user = userId is null ? null : await db.Users.FindAsync(userId);
+            if (user is null)
             {
                 context.RejectPrincipal();
                 await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return;
+            }
+
+            var now = DateTime.UtcNow;
+            if (user.LastSeenAt is null || now - user.LastSeenAt > TimeSpan.FromMinutes(1))
+            {
+                user.LastSeenAt = now;
+                await db.SaveChangesAsync();
             }
         };
+
+        // A button press (POST, e.g. saving a quest) can't be repeated after signing in,
+        // so send the user back to the page they pressed it on instead
+        options.Events.OnRedirectToLogin = context =>
+        {
+            var request = context.Request;
+            if (!HttpMethods.IsGet(request.Method)
+                && Uri.TryCreate(request.Headers.Referer.ToString(), UriKind.Absolute, out var referer)
+                && referer.Authority == request.Host.Value)
+            {
+                context.RedirectUri = context.Options.LoginPath + QueryString.Create("ReturnUrl", referer.PathAndQuery);
+            }
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        };
     });
+
+builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 
 
 var app = builder.Build();
@@ -63,26 +90,6 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthentication();   // reads the login cookie; must come before UseAuthorization
-// This middleware will helps us do testing on user functionality without having to implement a full authentication system yet. 
-app.Use(async (context, next) =>
-{
-    // Check if the user is already authenticated 
-    if (!context.User.Identity?.IsAuthenticated ?? true)
-    {
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, "TestUser"),
-            new Claim(ClaimTypes.Email, "test@example.com"),
-            // This matches the claim name used in _Layout.cshtml for the profile picture
-            new Claim("ProfilePicture", "https://via.placeholder.com/150") 
-        };
-
-        var identity = new ClaimsIdentity(claims, "MockCookieAuth");
-        context.User = new ClaimsPrincipal(identity);
-    }
-
-    await next();
-});
 
 app.UseAuthorization();
 

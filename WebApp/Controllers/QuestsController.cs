@@ -1,7 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebApp.Extensions;
 using WebApp.Models;
 using WebApp.ViewModels;
+using static WebApp.ViewModels.QuestFormMapper;
 
 namespace WebApp.Controllers;
 
@@ -20,10 +23,6 @@ namespace WebApp.Controllers;
  */
 public class QuestsController : Controller
 {
-    private static readonly string[] QuestionTypes = ["multipleChoice", "freeText", "code"];
-
-    private static readonly string[] OptionKeys = ["a", "b", "c", "d", "e", "f"];
-
     private readonly ILogger<QuestsController> _logger;
     private readonly SheetsDbContext _context;
 
@@ -72,12 +71,13 @@ public class QuestsController : Controller
         return View(model);
     }
 
-    // Save
+    // Save: only signed-in users can save quests; others are sent to the sign-in page
+    [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public IActionResult ToggleSave(int questId)
     {
-        _logger.LogInformation("Toggled the saved state for quest {QuestId}.", questId);
+        _logger.LogInformation("User {UserId} toggled the saved state for quest {QuestId}.", User.GetUserId(), questId);
 
         // DATABASE HOOK: connect the database here, for saving quests type shi
         return RedirectToAction(nameof(Quests));
@@ -384,60 +384,6 @@ public class QuestsController : Controller
                 ModelState.AddModelError($"{prefix}.CorrectOptionIds", "A correct option can't be empty.");
         }
 
-    }
-
-    // Removes blank boxes and duplicates
-    private static List<string> CleanAnswers(IEnumerable<string?> answers, bool caseSensitive) =>
-        answers
-            .Where(a => !string.IsNullOrWhiteSpace(a))
-            .Select(a => a!.Trim())
-            .Distinct(caseSensitive ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-    private static void ApplyToEntity(Quest quest, CreateQuestViewModel newQuest)
-    {
-        quest.Title = newQuest.Title.Trim();
-        quest.Description = string.IsNullOrWhiteSpace(newQuest.Description) ? null : newQuest.Description.Trim();
-        quest.Difficulty = newQuest.Difficulty.Trim();
-
-        for (var i = 0; i < newQuest.Questions.Count; i++)
-        {
-            var source = newQuest.Questions[i];
-            var question = new QuestQuestion
-            {
-                Position = i,
-                Type = source.Type,
-                Question = source.Question.Replace("\r\n", "\n").Trim(),
-                Points = source.Points,
-                Explaination = string.IsNullOrWhiteSpace(source.Explaination) ? null : source.Explaination.Trim()
-            };
-
-            if (source.Type == "code")
-            {
-                question.StartCode = (source.StartCode ?? string.Empty).Replace("\r\n", "\n").TrimEnd();
-                question.AcceptedCode = string.Join("\n", CodeAnswerChecker.SplitLines(source.AcceptedCode));
-            }
-            else if (source.Type == "freeText")
-            {
-                question.CaseSensitive = source.CaseSensitive;
-                question.AcceptedAnswers = string.Join("\n", CleanAnswers(source.AcceptedAnswers, source.CaseSensitive));
-            }
-            else
-            {
-                // Empty options are skipped, the rest are renumbered a, b, c ...
-                var correctKeys = new List<string>();
-                var next = 0;
-                foreach (var option in source.Options.Where(o => !string.IsNullOrWhiteSpace(o.Text)))
-                {
-                    var key = OptionKeys[next++];
-                    question.Options.Add(new QuestOption { OptionKey = key, Text = option.Text!.Trim() });
-                    if (source.CorrectOptionIds.Contains(option.Id)) correctKeys.Add(key);
-                }
-                question.CorrectOptionId = string.Join(",", correctKeys);
-            }
-
-            quest.Questions.Add(question);
-        }
     }
 
     private static CreateQuestViewModel ToViewModel(Quest quest) => new()

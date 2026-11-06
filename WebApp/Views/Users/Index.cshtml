@@ -24,6 +24,7 @@
                     <th>@Html.DisplayNameFor(m => m.QuizzesCompleted)</th>
                     <th>@Html.DisplayNameFor(m => m.Points)</th>
                     <th>@Html.DisplayNameFor(m => m.CreatedAt)</th>
+                    <th>@Html.DisplayNameFor(m => m.LastSeenAt)</th>
                     <th></th>
                 </tr>
             </thead>
@@ -38,6 +39,7 @@
                         <td>@Html.DisplayFor(_ => item.QuizzesCompleted)</td>
                         <td>@Html.DisplayFor(_ => item.Points)</td>
                         <td>@Html.DisplayFor(_ => item.CreatedAt)</td>
+                        <td><partial name="_LastSeen" model="item" /></td>
                         <td>
                             <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
                             <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |

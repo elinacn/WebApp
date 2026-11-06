@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebApp.Models;
 
@@ -33,4 +34,17 @@ public class User
     [Range(0, int.MaxValue, ErrorMessage = "Quizzes completed cannot be negative.")]
     [Display(Name = "Quizzes completed")]
     public int QuizzesCompleted { get; set; }
+
+    // Hashed with ASP.NET Core's PasswordHasher; the plain password is never stored.
+    // Null means the user has no password yet and cannot sign in.
+    public string? PasswordHash { get; set; }
+
+    // Updated (in UTC) by the login cookie check in Program.cs, at most once a minute
+    [Display(Name = "Last seen")]
+    public DateTime? LastSeenAt { get; set; }
+
+    public static readonly TimeSpan OnlineWindow = TimeSpan.FromMinutes(5);
+
+    [NotMapped]
+    public bool IsOnline => LastSeenAt >= DateTime.UtcNow - OnlineWindow;
 }

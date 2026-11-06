@@ -1,46 +1,67 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
 
 namespace WebApp.Controllers;
 
-// MVP sign-in: users have no passwords yet, so you pick who to sign in as.
-// The login cookie and the rest of the app work the same once passwords are added.
+// Sign-in with username and password. The login cookie carries the user's ID,
+// which the rest of the app reads with User.GetUserId().
 public class AccountController : Controller
 {
     private readonly SheetsDbContext _context;
+    private readonly IPasswordHasher<User> _passwordHasher;
     private readonly ILogger<AccountController> _logger;
 
-    public AccountController(SheetsDbContext context, ILogger<AccountController> logger)
+    public AccountController(SheetsDbContext context, IPasswordHasher<User> passwordHasher, ILogger<AccountController> logger)
     {
         _context = context;
+        _passwordHasher = passwordHasher;
         _logger = logger;
     }
 
-    public async Task<IActionResult> Login(string? returnUrl = null)
+    public IActionResult Login(string? returnUrl = null)
     {
-        var users = await _context.Users.AsNoTracking().OrderBy(u => u.Name).ToListAsync();
-        ViewData["Users"] = users
-            .Select(u => new SelectListItem($"{u.Name} ({u.Username})", u.Id.ToString()))
-            .ToList();
         ViewData["ReturnUrl"] = returnUrl;
         return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(int userId, string? returnUrl = null)
+    public async Task<IActionResult> Login(string? username, string? password, string? returnUrl = null)
     {
-        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
-        if (user is null)
+        ViewData["ReturnUrl"] = returnUrl;
+        ViewData["Username"] = username;
+
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))
         {
-            _logger.LogWarning("Sign-in attempted for unknown user {UserId}", userId);
-            TempData["Error"] = "Choose a user from the list.";
-            return RedirectToAction(nameof(Login), new { returnUrl });
+            ModelState.AddModelError(string.Empty, "Enter your username and password.");
+            return View();
+        }
+
+        var name = username.Trim().ToLower();
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == name);
+
+        // Same message whether the username or the password is wrong, so the form
+        // doesn't reveal which usernames exist
+        var result = user?.PasswordHash is null
+            ? PasswordVerificationResult.Failed
+            : _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+        if (user is null || result == PasswordVerificationResult.Failed)
+        {
+            _logger.LogWarning("Failed sign-in for username {Username}", name);
+            ModelState.AddModelError(string.Empty, "Wrong username or password.");
+            return View();
+        }
+
+        // Hashes made with older settings are upgraded on a successful sign-in
+        if (result == PasswordVerificationResult.SuccessRehashNeeded)
+        {
+            user.PasswordHash = _passwordHasher.HashPassword(user, password);
+            await _context.SaveChangesAsync();
         }
 
         // The cookie carries these claims; the ID is how every later request knows who this is

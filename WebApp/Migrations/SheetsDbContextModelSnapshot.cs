@@ -120,6 +120,7 @@ namespace WebApp.Migrations
                     b.Property<string>("AcceptedCode")
                         .HasMaxLength(1000)
                         .HasColumnType("TEXT");
+
                     b.Property<bool>("CaseSensitive")
                         .HasColumnType("INTEGER");
 
@@ -170,9 +171,15 @@ namespace WebApp.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("LastSeenAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Points")

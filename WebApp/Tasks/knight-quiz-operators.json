@@ -3,7 +3,7 @@
     "id": "quiz2",
     "title": "The trial - Operators",
     "description": "Your adventure has already begun, but the path to mastery is still long. Continue your adventure by conquering operators.",
-    "difficulty": "knight",
+    "difficulty": "intermediate",
     "questions": [
         {
             "id": "q1",

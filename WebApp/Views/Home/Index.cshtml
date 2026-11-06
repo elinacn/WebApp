@@ -15,7 +15,7 @@
         <div class="welcome">
             <span class="badge">Hit new hights with da code</span>
 
-            <h1 class="welcome-title">Welcome back, Test_User!</h1>
+            <h1 class="welcome-title">@(User.Identity?.IsAuthenticated == true ? $"Welcome back, {User.Identity.Name}!" : "Welcome!")</h1>
             <!-- streak and xp details with temp data -->
             <div class="user-stats-row">
                 <div class="stat-badge">
