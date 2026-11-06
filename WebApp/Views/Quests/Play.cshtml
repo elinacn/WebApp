@@ -19,7 +19,12 @@
             @if (Model.Submitted)
             {
                 var result = Model.Result;
-                <div class="quests-play-result" role="status">
+                var outcome = result is null || result.MaxScore <= 0 ? null
+                    : result.Score <= 0 ? "none"
+                    : result.Score >= result.MaxScore ? "perfect"
+                    : result.Score * 2 >= result.MaxScore ? "high"
+                    : "low";
+                <div class="quests-play-result" role="status" data-quest-outcome="@outcome">
                     @if (result is null)
                     {
                         <p class="text-danger">@Model.ResultError</p>
@@ -139,3 +144,26 @@
         </section>
     </div>
 </div>
+
+// sound effects script to choose which file should play for outcome
+@section Scripts {
+    <script>
+        (()=>{
+            const el = document.querySelector('[data-quest-outcome]');
+            if(!el) return;
+
+            const src = {
+                none: '@Url.Content("~/sounds/quest-none.wav")',
+                low: '@Url.Content("~/sounds/quest-low.wav")',
+                high: '@Url.Content("~/sounds/quest-high.wav")' ,
+                perfect: '@Url.Content("~/sounds/quest-perfect.wav")'
+
+            }[el.dataset.questOutcome];
+            if(!src) return;
+
+            const audio = new Audio(src);
+            audio.volume = 0.5;
+            audio.play().catch(() => { });
+        })();
+    </script>
+}
