@@ -691,3 +691,42 @@ fieldset[disabled] .quests-play-option.is-wrong:hover {
 .quest-card-play + .quest-card-actions {
   margin-top: 8px;
 }
+
+/* Play page: score summary, and code questions */
+.quests-play-result {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  color: #f8fafc;
+}
+
+.quests-play-result p {
+  margin: 0;
+}
+
+.quests-play-result p + p {
+  margin-top: 4px;
+}
+
+/* Keep line breaks in question text, e.g. the examples under code questions */
+.quests-play-question {
+  white-space: pre-line;
+}
+
+.quests-play-code {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background-color: #0f172a;
+  color: #e2e8f0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9rem;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.quests-play-code-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}

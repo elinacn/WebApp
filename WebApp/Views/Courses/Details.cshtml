@@ -1,0 +1,21 @@
+@model Course
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container py-4 text-light" data-bs-theme="dark">
+    <h1>@Model.Title</h1>
+
+    <dl class="row">
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.Code)</dt>
+        <dd class="col-sm-9">@Model.Code</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.Description)</dt>
+        <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.Description) ? "–" : Model.Description)</dd>
+    </dl>
+
+    <partial name="_CourseQuests" model="Model" />
+
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to list</a>
+</div>

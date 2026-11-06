@@ -1,0 +1,37 @@
+@model User
+@{
+    ViewData["Title"] = Model.Username;
+}
+
+<div class="container py-4 text-light" data-bs-theme="dark">
+    <h1>@Model.Username</h1>
+
+    <dl class="row">
+        <dt class="col-sm-3">ID</dt>
+        <dd class="col-sm-9">@Model.Id</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.Name)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.Name)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.StudyProgram)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.StudyProgram)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.Points)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.Points)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.QuizzesCompleted)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.QuizzesCompleted)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.CreatedAt)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(m => m.CreatedAt)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(m => m.LastSeenAt)</dt>
+        <dd class="col-sm-9"><partial name="_LastSeen" model="Model" /></dd>
+
+        <dt class="col-sm-3">Password</dt>
+        <dd class="col-sm-9">@(Model.PasswordHash is null ? "Not set – this user can't sign in until one is set under Edit" : "Set")</dd>
+    </dl>
+
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to list</a>
+</div>

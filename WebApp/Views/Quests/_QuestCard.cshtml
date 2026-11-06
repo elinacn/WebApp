@@ -25,7 +25,7 @@
         <div class="quest-progress" aria-hidden="true">
             <span class="quest-progress-fill" style="width: @(Model.ProgressPercent)%"></span>
         </div>
-        <p class="quest-card-progress">@Model.ProgressPercent%</p>
+        <p class="quest-card-progress">@(Model.Status == QuestStatus.Completed ? $"Best score: {Model.ProgressPercent}%" : $"{Model.ProgressPercent}%")</p>
     }
 
     <div class="quest-card-play">

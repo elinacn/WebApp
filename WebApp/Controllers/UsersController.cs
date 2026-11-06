@@ -1,0 +1,165 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using WebApp.Models;
+
+namespace WebApp.Controllers;
+
+public class UsersController : Controller
+{
+    private readonly SheetsDbContext _context;
+    private readonly IPasswordHasher<Models.User> _passwordHasher;
+    private readonly ILogger<UsersController> _logger;
+
+    public UsersController(SheetsDbContext context, IPasswordHasher<Models.User> passwordHasher, ILogger<UsersController> logger)
+    {
+        _context = context;
+        _passwordHasher = passwordHasher;
+        _logger = logger;
+    }
+
+    // READ: list, highest points first
+    public async Task<IActionResult> Index()
+    {
+        var users = await _context.Users.AsNoTracking()
+            .OrderByDescending(u => u.Points)
+            .ThenBy(u => u.Username)
+            .ToListAsync();
+        return View(users);
+    }
+
+    // READ: single
+    public async Task<IActionResult> Details(int? id)
+    {
+        if (id is null) return BadRequest();
+
+        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+        if (user is null)
+        {
+            _logger.LogWarning("User {UserId} not found", id);
+            return NotFound();
+        }
+        return View(user);
+    }
+
+    // CREATE
+    public IActionResult Create() => View(new User());
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    // Points and QuizzesCompleted are left out on purpose: they come from quiz results, not this form.
+    // The password is a separate field so it is never bound onto the entity or shown again.
+    public async Task<IActionResult> Create([Bind("Username,Name,StudyProgram,CreatedAt")] User user, string? password)
+    {
+        // Custom server-side rules on top of the data annotations
+        if (await _context.Users.AnyAsync(u => u.Username == user.Username))
+            ModelState.AddModelError(nameof(Models.User.Username), "This username is already taken.");
+
+        if (PasswordRules.Validate(password) is string passwordError)
+            ModelState.AddModelError(nameof(password), passwordError);
+
+        if (!ModelState.IsValid) return View(user);
+
+        try
+        {
+            user.PasswordHash = _passwordHasher.HashPassword(user, password!);
+            _context.Add(user);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Created user {UserId} ({Username})", user.Id, user.Username);
+            TempData["Success"] = "User created.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Failed to create user {Username}", user.Username);
+            ModelState.AddModelError(string.Empty, "Could not save changes. Please try again.");
+            return View(user);
+        }
+    }
+
+    // UPDATE
+    public async Task<IActionResult> Edit(int? id)
+    {
+        if (id is null) return BadRequest();
+        var user = await _context.Users.FindAsync(id);
+        return user is null ? NotFound() : View(user);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    // newPassword is optional: leave it empty to keep the current password
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Username,Name,StudyProgram,CreatedAt")] User user, string? newPassword)
+    {
+        if (id != user.Id) return BadRequest();
+
+        if (await _context.Users.AnyAsync(u => u.Username == user.Username && u.Id != id))
+            ModelState.AddModelError(nameof(Models.User.Username), "This username is already taken.");
+
+        if (!string.IsNullOrEmpty(newPassword) && PasswordRules.Validate(newPassword) is string passwordError)
+            ModelState.AddModelError(nameof(newPassword), passwordError);
+
+        if (!ModelState.IsValid) return View(user);
+
+        // Copy only the editable fields onto the stored user, so Points and
+        // QuizzesCompleted keep their values instead of being reset to 0
+        var existing = await _context.Users.FindAsync(id);
+        if (existing is null) return NotFound();
+
+        existing.Username = user.Username;
+        existing.Name = user.Name;
+        existing.StudyProgram = user.StudyProgram;
+        existing.CreatedAt = user.CreatedAt;
+        if (!string.IsNullOrEmpty(newPassword))
+            existing.PasswordHash = _passwordHasher.HashPassword(existing, newPassword);
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Updated user {UserId}{PasswordChanged}", id, string.IsNullOrEmpty(newPassword) ? "" : " (password changed)");
+            TempData["Success"] = "User updated.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            if (!await _context.Users.AnyAsync(u => u.Id == id)) return NotFound();
+            _logger.LogError(ex, "Concurrency conflict updating user {UserId}", id);
+            ModelState.AddModelError(string.Empty, "This user was changed elsewhere. Reload and try again.");
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Failed to update user {UserId}", id);
+            ModelState.AddModelError(string.Empty, "Could not save changes. Please try again.");
+        }
+        return View(user);
+    }
+
+    // DELETE
+    public async Task<IActionResult> Delete(int? id)
+    {
+        if (id is null) return BadRequest();
+        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+        return user is null ? NotFound() : View(user);
+    }
+
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user is null) return RedirectToAction(nameof(Index));
+
+        try
+        {
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Deleted user {UserId}", id);
+            TempData["Success"] = "User deleted.";
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Failed to delete user {UserId}", id);
+            TempData["Error"] = "Could not delete the user.";
+        }
+        return RedirectToAction(nameof(Index));
+    }
+}

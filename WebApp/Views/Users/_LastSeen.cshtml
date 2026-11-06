@@ -1,0 +1,14 @@
+@model User
+@* Last seen in local time, ISO format; "online" if seen within User.OnlineWindow *@
+@if (Model.LastSeenAt is DateTime seen)
+{
+    @seen.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+    @if (Model.IsOnline)
+    {
+        <span class="text-success fw-semibold ms-1">● online</span>
+    }
+}
+else
+{
+    <span class="text-secondary">never</span>
+}

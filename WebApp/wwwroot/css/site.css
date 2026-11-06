@@ -315,9 +315,15 @@ svg {
 .navbar-auth {
   display: flex;
   align-items: center;
+  gap: 24px;
 }
 
-.navbar-login-btn, .navbar-register-btn {
+.navbar-user {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+}
+
+.navbar-login-btn {
   background-color: #ffffff;
   color: #6366F1;
   padding: 8px 18px;
@@ -328,7 +334,7 @@ svg {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.navbar-login-btn:hover, .navbar-register-btn:hover {
+.navbar-login-btn:hover {
   background-color: #000000;
   color: #ffffff;
 }

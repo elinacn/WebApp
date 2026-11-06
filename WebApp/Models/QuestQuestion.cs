@@ -22,6 +22,13 @@ public class QuestQuestion
     [StringLength(500)]
     public string? AcceptedAnswers { get; set; }
 
+    // Code questions ("code"): starter code with one ____ blank for the student to fill in,
+    // and the accepted fill-ins, one per line (code can contain commas)
+    [StringLength(2000)]
+    public string? StartCode { get; set; }
+
+    [StringLength(1000)]
+    public string? AcceptedCode { get; set; }
     public bool CaseSensitive { get; set; }
 
     [StringLength(1000)]

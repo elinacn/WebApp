@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebApp.Extensions;
 using WebApp.Models;
 using WebApp.ViewModels;
+using static WebApp.ViewModels.QuestFormMapper;
 using WebApp.Services;
-using System.Security.Claims;
 
 namespace WebApp.Controllers;
 
@@ -22,22 +24,21 @@ namespace WebApp.Controllers;
  */
 public class QuestsController : Controller
 {
-    private static readonly string[] QuestionTypes = ["multipleChoice", "freeText"];
-
-    private static readonly string[] OptionKeys = ["a", "b", "c", "d", "e", "f"];
-
     private readonly ILogger<QuestsController> _logger;
     private readonly SheetsDbContext _context;
     private readonly DailyStreakService _streakService;
+    private readonly QuestScoringService _scoringService;
 
     public QuestsController(
     ILogger<QuestsController> logger,
     SheetsDbContext context,
-    DailyStreakService streakService)
+    DailyStreakService streakService,
+    QuestScoringService scoringService)
     {
     _logger = logger;
     _context = context;
     _streakService = streakService;
+    _scoringService = scoringService;
     }
 
 
@@ -80,18 +81,20 @@ public class QuestsController : Controller
         return View(model);
     }
 
-    // Save
+    // Save: only signed-in users can save quests; others are sent to the sign-in page
+    [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public IActionResult ToggleSave(int questId)
     {
-        _logger.LogInformation("Toggled the saved state for quest {QuestId}.", questId);
+        _logger.LogInformation("User {UserId} toggled the saved state for quest {QuestId}.", User.GetUserId(), questId);
 
         // DATABASE HOOK: connect the database here, for saving quests type shi
         return RedirectToAction(nameof(Quests));
     }
 
-    // Play
+    // Play: signing in is required, so the points earned can be recorded for the user
+    [Authorize]
     public async Task<IActionResult> Play(int? id)
     {
         if (id is null) return BadRequest();
@@ -111,6 +114,7 @@ public class QuestsController : Controller
         return View(ToPlayModel(quest));
     }
 
+    [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Play(int id, List<PlayAnswerInput>? answers)
@@ -148,6 +152,12 @@ public class QuestsController : Controller
                 question.AcceptedAnswers = accepted.ToList();
                 question.IsCorrect = given.Length > 0 && accepted.Any(a => string.Equals(a, given, comparison));
             }
+            else if (source.Type == "code")
+            {
+                // Fill-in-the-blank: compared as text, ignoring whitespace (the code is never run)
+                question.AcceptedAnswers = CodeAnswerChecker.SplitLines(source.AcceptedCode);
+                question.IsCorrect = CodeAnswerChecker.IsCorrect(source, answer?.Text);
+            }
             else
             {
                 var correct = (source.CorrectOptionId ?? string.Empty)
@@ -161,15 +171,23 @@ public class QuestsController : Controller
             }
         }
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? User.Identity?.Name;
+        // [Authorize] guarantees a signed-in user with an ID
+        var userId = User.GetUserId()!.Value;
+        var score = model.Questions.Where(q => q.IsCorrect).Sum(q => q.Points);
+        var maxScore = model.Questions.Sum(q => q.Points);
 
-        if (string.IsNullOrWhiteSpace(userId))
+        try
         {
-            return Unauthorized();
+            model.Result = await _scoringService.RecordCompletionAsync(userId, quest.Id, score, maxScore);
+        }
+        catch (DbUpdateException ex)
+        {
+            // e.g. the same quest submitted twice at the same moment; the answers are still shown
+            _logger.LogError(ex, "Failed to record completion of quest {QuestId} for user {UserId}", quest.Id, userId);
+            model.ResultError = "Your answers were checked, but the points couldn't be saved. Please try again.";
         }
 
-        await _streakService.RecordActivityAsync(userId);
+        await _streakService.RecordActivityAsync(userId.ToString());
 
         ModelState.Clear();
         return View(model);
@@ -191,6 +209,7 @@ public class QuestsController : Controller
                 Points = q.Points,
                 AllowMultiple = (q.CorrectOptionId ?? string.Empty)
                     .Split(',', StringSplitOptions.RemoveEmptyEntries).Length > 1,
+                StartCode = q.StartCode,
                 Options = q.Options
                     .OrderBy(o => o.OptionKey, StringComparer.Ordinal)
                     .Select(o => new PlayOptionViewModel { Key = o.OptionKey, Text = o.Text })
@@ -222,8 +241,19 @@ public class QuestsController : Controller
 
         var quest = new Quest { CreatedAt = DateTime.Today };
         ApplyToEntity(quest, newQuest);
-        _context.Quests.Add(quest);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            _context.Quests.Add(quest);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Created quest {QuestId} ({Title}) with {QuestionCount} questions", quest.Id, quest.Title, quest.Questions.Count);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Failed to create quest {Title}", quest.Title);
+            ModelState.AddModelError(string.Empty, "Could not save the quest. Please try again.");
+            return await CreateFormAsync(newQuest, clearModelState: false);
+        }
 
         TempData["Success"] = "Quest created.";
         return RedirectToAction(nameof(Quests), new { section = "create" });
@@ -238,7 +268,11 @@ public class QuestsController : Controller
             .AsNoTracking()
             .Include(q => q.Questions).ThenInclude(q => q.Options)
             .FirstOrDefaultAsync(q => q.Id == id);
-        if (quest is null) return NotFound();
+        if (quest is null)
+        {
+            _logger.LogWarning("Quest {QuestId} not found for editing", id);
+            return NotFound();
+        }
 
         var newQuest = ToViewModel(quest);
         PrepareQuestions(newQuest);
@@ -270,13 +304,36 @@ public class QuestsController : Controller
         var quest = await _context.Quests
             .Include(q => q.Questions).ThenInclude(q => q.Options)
             .FirstOrDefaultAsync(q => q.Id == id);
-        if (quest is null) return NotFound();
+        if (quest is null)
+        {
+            _logger.LogWarning("Quest {QuestId} not found for saving", id);
+            return NotFound();
+        }
 
         // Replace the old questions/options with what was posted
         _context.QuestQuestions.RemoveRange(quest.Questions);
         quest.Questions.Clear();
         ApplyToEntity(quest, newQuest);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Updated quest {QuestId} ({Title})", id, quest.Title);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            // Someone deleted the quest while this edit was open
+            if (!await _context.Quests.AnyAsync(q => q.Id == id)) return NotFound();
+            _logger.LogError(ex, "Concurrency conflict updating quest {QuestId}", id);
+            ModelState.AddModelError(string.Empty, "This quest was changed elsewhere. Reload and try again.");
+            return await CreateFormAsync(newQuest, clearModelState: false);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Failed to update quest {QuestId}", id);
+            ModelState.AddModelError(string.Empty, "Could not save the quest. Please try again.");
+            return await CreateFormAsync(newQuest, clearModelState: false);
+        }
 
         TempData["Success"] = "Quest updated.";
         return RedirectToAction(nameof(Quests), new { section = "create" });
@@ -290,7 +347,12 @@ public class QuestsController : Controller
             .AsNoTracking()
             .Include(q => q.Questions)
             .FirstOrDefaultAsync(q => q.Id == id);
-        return quest is null ? NotFound() : View(quest);
+        if (quest is null)
+        {
+            _logger.LogWarning("Quest {QuestId} not found for deletion", id);
+            return NotFound();
+        }
+        return View(quest);
     }
 
     [HttpPost, ActionName("Delete")]
@@ -300,10 +362,19 @@ public class QuestsController : Controller
         var quest = await _context.Quests.FindAsync(id);
         if (quest is null) return RedirectToAction(nameof(Quests), new { section = "create" });
 
-        _context.Quests.Remove(quest);
-        await _context.SaveChangesAsync();
-
-        TempData["Success"] = "Quest deleted.";
+        try
+        {
+            // Its questions and options are removed by the database (cascade delete)
+            _context.Quests.Remove(quest);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Deleted quest {QuestId} ({Title})", id, quest.Title);
+            TempData["Success"] = "Quest deleted.";
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Failed to delete quest {QuestId}", id);
+            TempData["Error"] = "Could not delete the quest.";
+        }
         return RedirectToAction(nameof(Quests), new { section = "create" });
     }
 
@@ -418,6 +489,16 @@ public class QuestsController : Controller
                 continue;
             }
 
+            if (question.Type == "code")
+            {
+                var blanks = (question.StartCode ?? string.Empty).Split(CodeAnswerChecker.Blank).Length - 1;
+                if (blanks != 1)
+                    ModelState.AddModelError($"{prefix}.StartCode", $"The start code must contain exactly one {CodeAnswerChecker.Blank} blank.");
+                if (CodeAnswerChecker.SplitLines(question.AcceptedCode).Count == 0)
+                    ModelState.AddModelError($"{prefix}.AcceptedCode", "Add at least one accepted answer (one per line).");
+                continue;
+            }
+
             if (question.Type == "freeText")
             {
                 var answers = CleanAnswers(question.AcceptedAnswers, question.CaseSensitive);
@@ -438,55 +519,6 @@ public class QuestsController : Controller
                 ModelState.AddModelError($"{prefix}.CorrectOptionIds", "A correct option can't be empty.");
         }
 
-    }
-
-    // Removes blank boxes and duplicates
-    private static List<string> CleanAnswers(IEnumerable<string?> answers, bool caseSensitive) =>
-        answers
-            .Where(a => !string.IsNullOrWhiteSpace(a))
-            .Select(a => a!.Trim())
-            .Distinct(caseSensitive ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-    private static void ApplyToEntity(Quest quest, CreateQuestViewModel newQuest)
-    {
-        quest.Title = newQuest.Title.Trim();
-        quest.Description = string.IsNullOrWhiteSpace(newQuest.Description) ? null : newQuest.Description.Trim();
-        quest.Difficulty = newQuest.Difficulty.Trim();
-
-        for (var i = 0; i < newQuest.Questions.Count; i++)
-        {
-            var source = newQuest.Questions[i];
-            var question = new QuestQuestion
-            {
-                Position = i,
-                Type = source.Type,
-                Question = source.Question.Trim(),
-                Points = source.Points,
-                Explaination = string.IsNullOrWhiteSpace(source.Explaination) ? null : source.Explaination.Trim()
-            };
-
-            if (source.Type == "freeText")
-            {
-                question.CaseSensitive = source.CaseSensitive;
-                question.AcceptedAnswers = string.Join("\n", CleanAnswers(source.AcceptedAnswers, source.CaseSensitive));
-            }
-            else
-            {
-                // Empty options are skipped, the rest are renumbered a, b, c ...
-                var correctKeys = new List<string>();
-                var next = 0;
-                foreach (var option in source.Options.Where(o => !string.IsNullOrWhiteSpace(o.Text)))
-                {
-                    var key = OptionKeys[next++];
-                    question.Options.Add(new QuestOption { OptionKey = key, Text = option.Text!.Trim() });
-                    if (source.CorrectOptionIds.Contains(option.Id)) correctKeys.Add(key);
-                }
-                question.CorrectOptionId = string.Join(",", correctKeys);
-            }
-
-            quest.Questions.Add(question);
-        }
     }
 
     private static CreateQuestViewModel ToViewModel(Quest quest) => new()
@@ -544,7 +576,7 @@ public class QuestsController : Controller
             query = query.Where(q => EF.Functions.Like(q.Difficulty, levelName));
         }
 
-        return await query
+        var cards = await query
             .OrderByDescending(q => q.CreatedAt)
             .ThenBy(q => q.Title)
             .Select(q => new QuestCardViewModel
@@ -556,6 +588,25 @@ public class QuestsController : Controller
                 Status = QuestStatus.NotStarted
             })
             .ToListAsync();
+
+        // Mark the quests the signed-in user has completed, with their best score as the progress
+        if (User.GetUserId() is int userId)
+        {
+            var bestScores = await _context.QuestCompletions.AsNoTracking()
+                .Where(c => c.UserId == userId)
+                .ToDictionaryAsync(c => c.QuestId, c => c.MaxScore == 0 ? 100 : c.BestScore * 100 / c.MaxScore);
+
+            foreach (var card in cards)
+            {
+                if (bestScores.TryGetValue(card.Id, out var percent))
+                {
+                    card.Status = QuestStatus.Completed;
+                    card.ProgressPercent = percent;
+                }
+            }
+        }
+
+        return cards;
     }
 
     private List<QuestCardViewModel> LoadContinueQuests(QuestFilterViewModel filter)
@@ -586,30 +637,5 @@ public class QuestsController : Controller
     {
         // DATABASE HOOK: connect the database here. 
         return [];
-    }
-
-    // testing for leaderboard functionality, simulates a quest completion and logs the score to the leaderboard
-    [HttpPost]
-    public async Task<IActionResult> SimulateQuest(int id = 1)
-    {
-        var quest = await _context.Quests
-            .Include(q => q.Questions)
-            .FirstOrDefaultAsync(q => q.Id == id);
-    
-        if (quest is null) return Content("Quest not found. Create a quest first.");
-    
-        var attempt = new QuestAttempt
-        {
-            StudentName = User.Identity?.Name ?? "TestUser",
-            Course = quest.Difficulty,
-            QuestId = quest.Id,
-            PointsEarned = quest.Questions.Sum(q => q.Points),
-            CompletedAt = DateTime.UtcNow
-        };
-    
-        _leaderboardContext.QuestAttempts.Add(attempt);
-        await _leaderboardContext.SaveChangesAsync();
-    
-        return RedirectToAction("Leaderboard", "Leaderboard");
     }
 }
