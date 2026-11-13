@@ -11,6 +11,32 @@ public class DailyStreakService
     {
         _context = context;
     }
+    
+    public async Task<List<bool>> GetCurrentWeekActivityAsync(string userId)
+    {
+        var osloTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Oslo");
+        var osloTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, osloTimeZone);
+        var today = DateOnly.FromDateTime(osloTime);
+
+        int diff = (7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7;
+        var monday = today.AddDays(-diff);
+        var sunday = monday.AddDays(6);
+
+        var activeDates = await _context.DailyStreaks
+            .Where(s => s.UserId == userId && s.ActivityDate >= monday && s.ActivityDate <= sunday)
+            .Select(s => s.ActivityDate)
+            .ToListAsync();
+
+        var activeSet = activeDates.ToHashSet();
+        var weekStatus = new List<bool>();
+
+        for (int i = 0; i < 7; i++)
+        {
+            weekStatus.Add(activeSet.Contains(monday.AddDays(i)));
+        }
+
+        return weekStatus;
+    }
 
     public async Task RecordActivityAsync(string userId)
     {
@@ -70,3 +96,4 @@ public class DailyStreakService
     
     
 }
+

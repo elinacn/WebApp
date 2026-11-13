@@ -1,17 +1,22 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using WebApp.Extensions;
 using WebApp.Models;
+using WebApp.Services;
+using WebApp.ViewModels;
 
 namespace WebApp.Controllers;
 
 public class HomeController : Controller
 {
     private readonly SheetsDbContext _context;
+    private readonly DailyStreakService _streakService;
 
-    public HomeController(SheetsDbContext context)
+    public HomeController(SheetsDbContext context, DailyStreakService streakService)
     {
         _context = context;
+        _streakService = streakService;
     }
 
     public async Task<IActionResult> Index()
@@ -20,6 +25,38 @@ public class HomeController : Controller
         var userId = User.GetUserId();
         var user = userId is null ? null : await _context.Users.FindAsync(userId);
         ViewData["CodePoints"] = user?.Points ?? 0;
+
+        int streak = 0;
+        List<bool> weekActivity = [false, false, false, false, false, false, false];
+
+        if (userId is not null)
+        {
+            var idString = userId.Value.ToString();
+            streak = await _streakService.GetStreakAsync(idString);
+            weekActivity = await _streakService.GetCurrentWeekActivityAsync(idString);
+        }
+        ViewData["Streak"] = streak;
+        ViewData["WeekActivity"] = weekActivity;
+
+        // fetches top 3 user for mini leaderboard
+        var dbUsers = await _context.Users
+            .AsNoTracking()
+            .OrderByDescending(u => u.Points)
+            .ThenBy(u => u.Name)
+            .Take(3)
+            .ToListAsync();
+
+        // 2. Map them and assign ranks in memory
+        var topUsers = dbUsers.Select((u, index) => new LeaderboardEntryViewModel
+        {
+            Rank = index + 1,
+            Name = u.Name,
+            Points = u.Points,
+            QuizzesCompleted = u.QuizzesCompleted
+        }).ToList();
+
+        ViewData["TopUsers"] = topUsers;
+
         return View();
     }
 
