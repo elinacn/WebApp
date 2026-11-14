@@ -12,7 +12,7 @@ public class QuestFormMapperTests
         QuestFormMapper.ApplyToEntity(quest, new CreateQuestViewModel
         {
             Title = "  Test quest ",
-            Difficulty = "Apprentice",
+            Difficulty = "Beginner",
             Questions = [question]
         });
         return quest;

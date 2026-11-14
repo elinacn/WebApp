@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
+using Microsoft.AspNetCore.Authorization;
+using WebApp.Extensions;
 
 namespace WebApp.Controllers;
 
@@ -78,18 +80,34 @@ public class UsersController : Controller
     }
 
     // UPDATE
+    [Authorize]
     public async Task<IActionResult> Edit(int? id)
     {
-        if (id is null) return BadRequest();
-        var user = await _context.Users.FindAsync(id);
+        if (id is null)
+        {
+            return BadRequest();
+        }
+
+        if (id.Value != User.GetUserId())
+        {
+            return Forbid();
+        }
+
+        var user = await _context.Users.FindAsync(id.Value);
+
         return user is null ? NotFound() : View(user);
     }
 
+    [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
     // newPassword is optional: leave it empty to keep the current password
-    public async Task<IActionResult> Edit(int id, [Bind("Id,Username,Name,StudyProgram,CreatedAt")] User user, string? newPassword)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Username,Name,StudyProgram,CreatedAt")] User user, string? newPassword, string? currentPassword)
     {
+        if (id != User.GetUserId())
+        {
+            return Forbid();
+        }
         if (id != user.Id) return BadRequest();
 
         if (await _context.Users.AnyAsync(u => u.Username == user.Username && u.Id != id))
@@ -98,13 +116,27 @@ public class UsersController : Controller
         if (!string.IsNullOrEmpty(newPassword) && PasswordRules.Validate(newPassword) is string passwordError)
             ModelState.AddModelError(nameof(newPassword), passwordError);
 
+        var existing = await _context.Users.FindAsync(id);
+        if (existing is null) return NotFound();
+
+        if (!string.IsNullOrEmpty(newPassword))
+        {
+            if (string.IsNullOrEmpty(currentPassword))
+            {
+                ModelState.AddModelError(nameof(currentPassword), "Enter your current password to change it.");
+            }
+            else if (existing.PasswordHash is null ||
+                _passwordHasher.VerifyHashedPassword(existing, existing.PasswordHash, currentPassword)
+                    == PasswordVerificationResult.Failed)
+            {
+                ModelState.AddModelError(nameof(currentPassword), "Your current password is incorrect.");
+            }
+        }
+
         if (!ModelState.IsValid) return View(user);
 
         // Copy only the editable fields onto the stored user, so Points and
         // QuizzesCompleted keep their values instead of being reset to 0
-        var existing = await _context.Users.FindAsync(id);
-        if (existing is null) return NotFound();
-
         existing.Username = user.Username;
         existing.Name = user.Name;
         existing.StudyProgram = user.StudyProgram;
@@ -134,17 +166,30 @@ public class UsersController : Controller
     }
 
     // DELETE
+    [Authorize]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id is null) return BadRequest();
+
+        if (id.Value != User.GetUserId())
+        {
+            return Forbid();
+        }
+
         var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
         return user is null ? NotFound() : View(user);
     }
 
+    [Authorize]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
+        if (id != User.GetUserId())
+        {
+            return Forbid();
+        }
+
         var user = await _context.Users.FindAsync(id);
         if (user is null) return RedirectToAction(nameof(Index));
 

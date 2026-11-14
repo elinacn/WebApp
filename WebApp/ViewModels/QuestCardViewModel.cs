@@ -11,6 +11,7 @@ public class QuestCardViewModel
     public string DifficultyLabel { get; set; } = string.Empty;
     public Difficulty Difficulty { get; set; }
     public int Points { get; set; }
+    public int XpReward => DifficultyRules.GetCompletionXp(string.IsNullOrEmpty(DifficultyLabel) ? Difficulty.ToString() : DifficultyLabel);
     public QuestStatus Status { get; set; }
     public int ProgressPercent { get; set; }
     public bool IsSaved { get; set; }
