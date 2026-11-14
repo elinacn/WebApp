@@ -23,7 +23,7 @@ public static class QuestFormMapper
     {
         quest.Title = newQuest.Title.Trim();
         quest.Description = string.IsNullOrWhiteSpace(newQuest.Description) ? null : newQuest.Description.Trim();
-        quest.Difficulty = newQuest.Difficulty.Trim();
+        quest.Difficulty = DifficultyRules.Normalize(newQuest.Difficulty);
 
         for (var i = 0; i < newQuest.Questions.Count; i++)
         {

@@ -3,7 +3,7 @@
     "id": "coding-basics",
     "title": "Coding basics",
     "description": "Fill in the missing code (____) to complete each method. The examples show what the finished method should return.",
-    "difficulty": "apprentice",
+    "difficulty": "beginner",
     "questions": [
         {
             "id": "q1",

@@ -1,3 +1,5 @@
+using WebApp.Models;
+
 using WebApp.Services;
 
 namespace WebApp.ViewModels;
@@ -8,12 +10,14 @@ public class PlayQuestViewModel
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string Difficulty { get; set; } = string.Empty;
+    public int XpReward => DifficultyRules.GetCompletionXp(Difficulty);
     public bool Submitted { get; set; }
     public List<PlayQuestionViewModel> Questions { get; set; } = [];
 
     // After submitting: the score and the code points earned (null if it couldn't be saved)
     public QuestResult? Result { get; set; }
     public string? ResultError { get; set; }
+    public string? StreakError { get; set; }
 }
 
 public class PlayQuestionViewModel

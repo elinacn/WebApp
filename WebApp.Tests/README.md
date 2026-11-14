@@ -1,15 +1,15 @@
 # WebApp.Tests
 
-xUnit tests for the WebApp project: 6 positive and 6 negative tests. They are run by hand during development and are not part of any build or deployment step.
+xUnit tests for the WebApp project: 34 test cases. They are run by hand during development and are not part of any build or deployment step.
 
 ## Running
 
 From the repository root:
 
 ```bash
-dotnet test WebApp.Tests                               # all 12 tests
-dotnet test WebApp.Tests --filter Category=Positive    # the 6 positive tests
-dotnet test WebApp.Tests --filter Category=Negative    # the 6 negative tests
+dotnet test WebApp.Tests                               # all 34 tests
+dotnet test WebApp.Tests --filter Category=Positive    # the 8 positive tests
+dotnet test WebApp.Tests --filter Category=Negative    # the 8 negative tests
 ```
 
 In VS Code, the tests also appear in the Testing panel (C# Dev Kit).
@@ -21,6 +21,9 @@ In VS Code, the tests also appear in the Testing panel (C# Dev Kit).
 | `CodeAnswerCheckerTests.cs` | Grading of fill-in-the-blank code questions | Unit |
 | `PasswordRulesTests.cs` | Password length rules | Unit |
 | `QuestFormMapperTests.cs` | Turning the quest form into database rows | Unit |
+| `DifficultyXpTests.cs` | Difficulty XP rewards, retakes and legacy names | Service with SQLite |
+| `SubmissionSaveTests.cs` | Successful submissions and failed score/streak saves | Controller with SQLite |
+| `PasswordChangeTests.cs` | Current password checks and ordinary profile edits | Integration |
 | `SignInTests.cs` | Signing in, wrong passwords, and `[Authorize]` on saving quests | Integration |
 
 ## How the integration tests work

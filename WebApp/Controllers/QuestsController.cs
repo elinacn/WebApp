@@ -54,6 +54,7 @@ public class QuestsController : Controller
         var filter = new QuestFilterViewModel
         {
             SearchText = searchText,
+            Difficulty = difficulty,
         };
 
         var newQuest = new CreateQuestViewModel();
@@ -186,7 +187,19 @@ public class QuestsController : Controller
             model.ResultError = "Your answers were checked, but the points couldn't be saved. Please try again.";
         }
 
-        await _streakService.RecordActivityAsync(userId.ToString());
+        // Do not retry pending score changes through the streak service after a failed save.
+        if (model.Result is not null)
+        {
+            try
+            {
+                await _streakService.RecordActivityAsync(userId.ToString());
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Failed to record streak activity for user {UserId} after quest {QuestId}", userId, quest.Id);
+                model.StreakError = "Your score was saved, but today's streak activity couldn't be saved. Please try again.";
+            }
+        }
 
         ModelState.Clear();
         return View(model);

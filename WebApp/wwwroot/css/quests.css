@@ -56,6 +56,18 @@
   padding: 8px 16px 0 24px;
 }
 
+.quests-play-page {
+  justify-content: center;
+  padding: 24px 24px 40px;
+}
+
+.quests-play-page .quests-main {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 8px 0 0;
+}
+
 .quests-filter {
   display: flex;
   flex-wrap: wrap;
@@ -261,23 +273,28 @@
 .quests-row,
 .quests-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 20px;
-  max-width: 760px;
+  max-width: 1100px;
 }
 
 .quest-card {
-  aspect-ratio: 1;
   border-radius: 4px;
-  min-height: 120px;
+  min-width: 0;
+  min-height: 250px;
   position: relative;
   background-color: #d1d5db;
   color: #111827;
-  padding: 16px 14px 12px;
+  padding: 18px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+}
+
+/* Keep all content inside the card, even when a title wraps. */
+.quest-card > * {
+  flex-shrink: 0;
 }
 
 .quest-save-form {
@@ -305,6 +322,9 @@
   font-size: 0.95rem;
   font-weight: 700;
   margin: 0 28px 0 0;
+  line-height: 1.35;
+  min-height: 2.7em;
+  overflow-wrap: anywhere;
 }
 
 .quest-card-code,
@@ -322,6 +342,7 @@
 .quest-card-actions {
   margin-top: auto;
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   font-size: 0.8rem;
 }
@@ -350,14 +371,6 @@
   background-color: #6366F1;
 }
 
-@media (max-width: 900px) {
-  .quests-row,
-  .quests-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-width: none;
-  }
-}
-
 @media (max-width: 640px) {
   .quests-page {
     flex-direction: column;
@@ -372,10 +385,6 @@
     padding: 16px 0 0;
   }
 
-  .quests-row,
-  .quests-grid {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 
 .quests-create-block [hidden] {

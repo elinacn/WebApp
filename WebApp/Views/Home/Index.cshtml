@@ -3,7 +3,7 @@
     ViewData["Welcome to ####"] = "Home Page";
 
     // The signed-in user's code points from completed quests (set by HomeController)
-    int streakCount = ViewData["StreakCount"] as int? ?? 0;
+    int streakCount = ViewData["Streak"] as int? ?? 0;
     int totalXp = ViewData["CodePoints"] as int? ?? 0;
     var weekActivity = ViewData["WeekActivity"] as List<bool> ?? new List<bool> { false, false, false, false, false, false, false };
     var topUsers = ViewData["TopUsers"] as List<LeaderboardEntryViewModel> ?? new List<LeaderboardEntryViewModel>();
@@ -12,7 +12,8 @@
 
 <div class="home-container">
     <div class="home-grid-3col">
-        <!-- LEFT: Daily Streak Calendar -->
+        <!-- LEFT: Weekly streak and a space for challenges -->
+        <div class="home-left-column">
         <aside class="side-card streak-card">
             <div class="side-card-header">
                 <h3>Weekly Streak</h3>
@@ -36,6 +37,13 @@
                 }
             </div>
         </aside>
+
+        <section class="side-card home-challenge-card">
+            <div class="side-card-header">
+                <h3>Challenges</h3>
+            </div>
+        </section>
+        </div>
 
         <!-- CENTER: Welcome & Stats -->
         <div class="welcome">
