@@ -5,6 +5,7 @@ import ToastProvider from './context/ToastProvider'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
+import QuestsPage from './pages/QuestsPage'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
             <Route element={<Layout />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/quests" element={<QuestsPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>

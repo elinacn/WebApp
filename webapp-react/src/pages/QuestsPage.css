@@ -1,0 +1,83 @@
+.quest-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.quest-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--indigo);
+}
+
+.quest-card.completed {
+  border-color: rgba(34, 197, 94, 0.45);
+}
+
+.quest-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.quest-card h3 {
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.quest-card .description {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.quest-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.quest-meta .xp {
+  color: var(--sky);
+  font-weight: 700;
+}
+
+.progress {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--slate);
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), #86efac);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.quest-card .progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #86efac;
+}
+
+.quest-card-actions {
+  margin-top: auto;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quest-card-actions .btn-primary {
+  flex: 1;
+}
