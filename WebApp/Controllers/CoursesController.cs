@@ -2,28 +2,26 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
+using WebApp.DAL;
 
 namespace WebApp.Controllers;
 
 // Only admins can manage courses; browsing remains public.
 public class CoursesController : Controller
 {
-    private readonly SheetsDbContext _context;
+    private readonly ICourseRepository _courses;
     private readonly ILogger<CoursesController> _logger;
 
-    public CoursesController(SheetsDbContext context, ILogger<CoursesController> logger)
+    public CoursesController(ICourseRepository courses, ILogger<CoursesController> logger)
     {
-        _context = context;
+        _courses = courses;
         _logger = logger;
     }
 
     // READ: list, with quests loaded for the counts
     public async Task<IActionResult> Index()
     {
-        var courses = await _context.Courses.AsNoTracking()
-            .Include(c => c.Quests)
-            .OrderBy(c => c.Title)
-            .ToListAsync();
+        var courses = await _courses.GetAllAsync();
         return View(courses);
     }
 
@@ -32,7 +30,7 @@ public class CoursesController : Controller
     {
         if (id is null) return BadRequest();
 
-        var course = await FindWithQuestsAsync(id.Value);
+        var course = await _courses.GetWithQuestsAsync(id.Value);
         if (course is null)
         {
             _logger.LogWarning("Course {CourseId} not found", id);
@@ -57,8 +55,7 @@ public class CoursesController : Controller
 
         try
         {
-            _context.Add(course);
-            await _context.SaveChangesAsync();
+            await _courses.AddAsync(course);
             _logger.LogInformation("Created course {CourseId} ({Code})", course.Id, course.Code);
             TempData["Success"] = "Course created.";
             return RedirectToAction(nameof(Index));
@@ -76,7 +73,7 @@ public class CoursesController : Controller
     public async Task<IActionResult> Edit(int? id)
     {
         if (id is null) return BadRequest();
-        var course = await _context.Courses.FindAsync(id);
+        var course = await _courses.GetByIdAsync(id.Value);
         return course is null ? NotFound() : View(course);
     }
 
@@ -93,7 +90,7 @@ public class CoursesController : Controller
         if (!ModelState.IsValid) return View(course);
 
         // Copy only the form fields, so the stored course keeps its quests
-        var existing = await _context.Courses.FindAsync(id);
+        var existing = await _courses.GetByIdAsync(id);
         if (existing is null) return NotFound();
 
         existing.Code = course.Code;
@@ -102,14 +99,14 @@ public class CoursesController : Controller
 
         try
         {
-            await _context.SaveChangesAsync();
+            await _courses.UpdateAsync(existing);
             _logger.LogInformation("Updated course {CourseId}", id);
             TempData["Success"] = "Course updated.";
             return RedirectToAction(nameof(Index));
         }
         catch (DbUpdateConcurrencyException ex)
         {
-            if (!await _context.Courses.AnyAsync(c => c.Id == id)) return NotFound();
+            if (await _courses.GetWithQuestsAsync(id) is null) return NotFound();
             _logger.LogError(ex, "Concurrency conflict updating course {CourseId}", id);
             ModelState.AddModelError(string.Empty, "This course was changed elsewhere. Reload and try again.");
         }
@@ -126,7 +123,7 @@ public class CoursesController : Controller
     public async Task<IActionResult> Delete(int? id)
     {
         if (id is null) return BadRequest();
-        var course = await FindWithQuestsAsync(id.Value);
+        var course = await _courses.GetWithQuestsAsync(id.Value);
         return course is null ? NotFound() : View(course);
     }
 
@@ -135,14 +132,13 @@ public class CoursesController : Controller
     [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var course = await _context.Courses.FindAsync(id);
+        var course = await _courses.GetByIdAsync(id);
         if (course is null) return RedirectToAction(nameof(Index));
 
         try
         {
             // The database sets CourseId to null on the course's quests
-            _context.Courses.Remove(course);
-            await _context.SaveChangesAsync();
+            await _courses.DeleteAsync(course);
             _logger.LogInformation("Deleted course {CourseId} ({Code})", id, course.Code);
             TempData["Success"] = "Course deleted.";
         }
@@ -153,11 +149,6 @@ public class CoursesController : Controller
         }
         return RedirectToAction(nameof(Index));
     }
-
-    private Task<Course?> FindWithQuestsAsync(int id) =>
-        _context.Courses.AsNoTracking()
-            .Include(c => c.Quests.OrderBy(q => q.Title))
-            .FirstOrDefaultAsync(c => c.Id == id);
 
     // Codes are stored trimmed and upper-case, so "web-101" and "WEB-101 " are the same code
     private static void Normalize(Course course)
@@ -170,10 +161,10 @@ public class CoursesController : Controller
     // Unique code is also enforced by the database; unique title avoids two identical-looking courses
     private async Task CheckDuplicatesAsync(Course course)
     {
-        if (await _context.Courses.AnyAsync(c => c.Code == course.Code && c.Id != course.Id))
+        if (await _courses.CodeExistsAsync(course.Code, course.Id))
             ModelState.AddModelError(nameof(Course.Code), "A course with this code already exists.");
 
-        if (await _context.Courses.AnyAsync(c => c.Title == course.Title && c.Id != course.Id))
+        if (await _courses.TitleExistsAsync(course.Title, course.Id))
             ModelState.AddModelError(nameof(Course.Title), "A course with this title already exists.");
     }
 }

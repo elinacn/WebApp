@@ -13,6 +13,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllersWithViews();
+// Use one course repository per request, sharing the request's database context.
+builder.Services.AddScoped<WebApp.DAL.ICourseRepository, WebApp.DAL.CourseRepository>();
 builder.Services.AddScoped<WebApp.Services.DailyStreakService>();
 builder.Services.AddScoped<WebApp.Services.QuestScoringService>();
 builder.Services.AddDbContext<WebApp.Models.SheetsDbContext>(options =>
