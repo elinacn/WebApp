@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Api.Data;
+using WebApp.Api.DAL;
 using WebApp.Api.Extensions;
 using WebApp.Api.Middleware;
 using WebApp.Api.Models;
@@ -23,6 +24,7 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddScoped<IQuestRepository, QuestRepository>();
 builder.Services.AddSingleton<QuestGradingService>();
 builder.Services.AddScoped<QuestScoringService>();
 builder.Services.AddScoped<StreakService>();

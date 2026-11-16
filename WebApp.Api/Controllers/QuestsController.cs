@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebApp.Api.Data;
+using WebApp.Api.DAL;
 using WebApp.Api.Dtos;
 using WebApp.Api.Extensions;
 using WebApp.Api.Models;
@@ -13,20 +13,20 @@ namespace WebApp.Api.Controllers;
 [Route("api/quests")]
 public class QuestsController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly IQuestRepository _quests;
     private readonly QuestGradingService _grading;
     private readonly QuestScoringService _scoring;
     private readonly StreakService _streaks;
     private readonly ILogger<QuestsController> _logger;
 
     public QuestsController(
-        AppDbContext db,
+        IQuestRepository quests,
         QuestGradingService grading,
         QuestScoringService scoring,
         StreakService streaks,
         ILogger<QuestsController> logger)
     {
-        _db = db;
+        _quests = quests;
         _grading = grading;
         _scoring = scoring;
         _streaks = streaks;
@@ -40,31 +40,8 @@ public class QuestsController : ControllerBase
         string? search, string? difficulty, int? courseId, string? status, string? sort)
     {
         var userId = User.GetUserId();
-        var query = _db.Quests.AsNoTracking().Include(q => q.Questions).Include(q => q.Course).AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var text = search.Trim();
-            query = query.Where(q => EF.Functions.Like(q.Title, $"%{text}%")
-                || (q.Description != null && EF.Functions.Like(q.Description, $"%{text}%")));
-        }
-
-        if (DifficultyRules.Normalize(difficulty) is string level)
-            query = query.Where(q => q.Difficulty == level);
-
-        if (courseId is not null)
-            query = query.Where(q => q.CourseId == courseId);
-
-        if (userId is not null && status is "completed" or "notCompleted")
-        {
-            var completed = _db.QuestCompletions.Where(c => c.UserId == userId).Select(c => c.QuestId);
-            query = status == "completed"
-                ? query.Where(q => completed.Contains(q.Id))
-                : query.Where(q => !completed.Contains(q.Id));
-        }
-
-        var quests = await query.ToListAsync();
-        var bestPercent = userId is null ? [] : await GetBestPercentAsync(userId.Value);
+        var quests = await _quests.SearchAsync(search, difficulty, courseId, status, userId);
+        var bestPercent = userId is null ? [] : await _quests.GetBestPercentAsync(userId.Value);
 
         // Sorted in memory: difficulty and XP are not stored as numbers
         IEnumerable<Quest> sorted = sort switch
@@ -83,7 +60,7 @@ public class QuestsController : ControllerBase
     [HttpGet("{id:int}/play")]
     public async Task<ActionResult<QuestPlayDto>> GetForPlay(int id)
     {
-        var quest = await LoadQuestAsync(id);
+        var quest = await _quests.GetWithQuestionsAsync(id);
         if (quest is null) return NotFound();
 
         if (quest.Questions.Count == 0)
@@ -99,7 +76,7 @@ public class QuestsController : ControllerBase
     {
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
-        var quest = await LoadQuestAsync(id);
+        var quest = await _quests.GetWithQuestionsAsync(id);
         if (quest is null) return NotFound();
 
         var userId = User.GetUserId()!.Value;
@@ -130,7 +107,7 @@ public class QuestsController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult<QuestFormDto>> GetForEdit(int id)
     {
-        var quest = await LoadQuestAsync(id);
+        var quest = await _quests.GetWithQuestionsAsync(id);
         return quest is null ? NotFound() : quest.ToFormDto();
     }
 
@@ -144,11 +121,9 @@ public class QuestsController : ControllerBase
 
         var quest = new Quest { CreatedAt = DateTime.UtcNow };
         form.ApplyTo(quest);
-        _db.Quests.Add(quest);
-        await _db.SaveChangesAsync();
+        await _quests.AddAsync(quest);
 
         _logger.LogInformation("Created quest {QuestId} ({Title}) with {Count} questions", quest.Id, quest.Title, quest.Questions.Count);
-        await _db.Entry(quest).Reference(q => q.Course).LoadAsync();
         return CreatedAtAction(nameof(GetForEdit), new { id = quest.Id }, quest.ToSummaryDto(null));
     }
 
@@ -157,15 +132,14 @@ public class QuestsController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, QuestFormDto form)
     {
-        var quest = await _db.Quests.Include(q => q.Questions).ThenInclude(q => q.Options).FirstOrDefaultAsync(q => q.Id == id);
+        var quest = await _quests.GetWithQuestionsAsync(id, tracking: true);
         if (quest is null) return NotFound();
 
         await ValidateAsync(form, id);
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
-        _db.QuestQuestions.RemoveRange(quest.Questions);
         form.ApplyTo(quest);
-        await _db.SaveChangesAsync();
+        await _quests.UpdateAsync(quest);
 
         _logger.LogInformation("Updated quest {QuestId} ({Title})", id, quest.Title);
         return NoContent();
@@ -176,26 +150,14 @@ public class QuestsController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var quest = await _db.Quests.FindAsync(id);
+        var quest = await _quests.GetByIdAsync(id);
         if (quest is null) return NotFound();
 
-        _db.Quests.Remove(quest);
-        await _db.SaveChangesAsync();
+        await _quests.DeleteAsync(quest);
 
         _logger.LogInformation("Deleted quest {QuestId} ({Title})", id, quest.Title);
         return NoContent();
     }
-
-    private Task<Quest?> LoadQuestAsync(int id) =>
-        _db.Quests.AsNoTracking()
-            .Include(q => q.Questions).ThenInclude(q => q.Options)
-            .FirstOrDefaultAsync(q => q.Id == id);
-
-    // The signed-in user's best score per completed quest, as a percentage
-    private Task<Dictionary<int, int>> GetBestPercentAsync(int userId) =>
-        _db.QuestCompletions.AsNoTracking()
-            .Where(c => c.UserId == userId)
-            .ToDictionaryAsync(c => c.QuestId, c => c.MaxScore == 0 ? 100 : c.BestScore * 100 / c.MaxScore);
 
     // Domain rules (QuestValidator) plus the checks that need the database
     private async Task ValidateAsync(QuestFormDto form, int questId)
@@ -204,10 +166,10 @@ public class QuestsController : ControllerBase
             ModelState.AddModelError(key, message);
 
         var title = form.Title.Trim();
-        if (await _db.Quests.AnyAsync(q => q.Title == title && q.Id != questId))
+        if (await _quests.TitleExistsAsync(title, questId))
             ModelState.AddModelError(nameof(QuestFormDto.Title), "A quest with this title already exists.");
 
-        if (form.CourseId is int courseId && !await _db.Courses.AnyAsync(c => c.Id == courseId))
+        if (form.CourseId is int courseId && !await _quests.CourseExistsAsync(courseId))
             ModelState.AddModelError(nameof(QuestFormDto.CourseId), "The selected course doesn't exist.");
 
         if (!ModelState.IsValid)
