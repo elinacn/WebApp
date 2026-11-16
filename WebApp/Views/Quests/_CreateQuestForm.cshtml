@@ -32,8 +32,14 @@
                         <td>@quest.TotalPoints</td>
                         <td>@quest.CreatedAt.ToString("dd'/'MM'/'yyyy")</td>
                         <td>
-                            <a asp-controller="Quests" asp-action="Edit" asp-route-id="@quest.Id">Edit</a> |
-                            <a asp-controller="Quests" asp-action="Delete" asp-route-id="@quest.Id">Delete</a>
+                            @if (quest.CanEdit)
+                            {
+                                <a asp-controller="Quests" asp-action="Edit" asp-route-id="@quest.Id">Edit</a>
+                            }
+                            @if (quest.CanDelete)
+                            {
+                                <a asp-controller="Quests" asp-action="Delete" asp-route-id="@quest.Id">Delete</a>
+                            }
                         </td>
                     </tr>
                 }

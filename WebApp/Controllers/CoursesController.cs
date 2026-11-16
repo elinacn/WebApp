@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
 
 namespace WebApp.Controllers;
 
+// Only admins can manage courses; browsing remains public.
 public class CoursesController : Controller
 {
     private readonly SheetsDbContext _context;
@@ -40,10 +42,12 @@ public class CoursesController : Controller
     }
 
     // CREATE
+    [Authorize(Roles = AppRoles.Admin)]
     public IActionResult Create() => View(new Course());
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Create([Bind("Code,Title,Description")] Course course)
     {
         Normalize(course);
@@ -68,6 +72,7 @@ public class CoursesController : Controller
     }
 
     // UPDATE
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id is null) return BadRequest();
@@ -77,6 +82,7 @@ public class CoursesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Edit(int id, [Bind("Id,Code,Title,Description")] Course course)
     {
         if (id != course.Id) return BadRequest();
@@ -116,6 +122,7 @@ public class CoursesController : Controller
     }
 
     // DELETE: the confirmation page shows which quests will be left without a course
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id is null) return BadRequest();
@@ -125,6 +132,7 @@ public class CoursesController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var course = await _context.Courses.FindAsync(id);

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -22,6 +23,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.LoginPath = "/Account/Login";   // where [Authorize] sends anonymous visitors
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        };
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
 
@@ -37,6 +43,20 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
                 context.RejectPrincipal();
                 await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
                 return;
+            }
+
+            // Read the current role from the database, so promotions/demotions affect existing sessions.
+            var role = user.IsAdmin ? AppRoles.Admin : AppRoles.Student;
+            if (!context.Principal!.IsInRole(role) || context.Principal.Identity?.Name != user.Name)
+            {
+                var identity = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.Name),
+                    new Claim(ClaimTypes.Role, role)
+                }, CookieAuthenticationDefaults.AuthenticationScheme);
+                context.ReplacePrincipal(new ClaimsPrincipal(identity));
+                context.ShouldRenew = true;
             }
 
             var now = DateTime.UtcNow;

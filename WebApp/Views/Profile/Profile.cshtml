@@ -19,6 +19,7 @@
             <h2 id="profile-name">@Model.Name</h2>
             <p class="profile-username">@($"@{Model.Username}")</p>
             <p class="profile-bio">I love questions!</p>
+            <a asp-controller="Users" asp-action="Edit" asp-route-id="@Model.Id">Edit profile</a>
         </div>
         <div class="profile-streak">
             <span class="profile-streak-icon">🔥</span>
@@ -82,5 +83,4 @@
             </ul>
         }
     </section>
-    <p class="profile-placeholder-note">placeholder for something else.</p>
 </main>
