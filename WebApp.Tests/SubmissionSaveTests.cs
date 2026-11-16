@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging.Abstractions;
 using WebApp.Controllers;
 using WebApp.Models;
+using WebApp.DAL;
 using WebApp.Services;
 using WebApp.ViewModels;
 
@@ -69,7 +70,7 @@ public class SubmissionSaveTests
         context.AddRange(user, quest);
         await context.SaveChangesAsync();
         failure.Enabled = true;
-        var controller = new QuestsController(NullLogger<QuestsController>.Instance, context,
+        var controller = new QuestsController(NullLogger<QuestsController>.Instance, new QuestRepository(context),
             new DailyStreakService(context), new QuestScoringService(context, NullLogger<QuestScoringService>.Instance));
         controller.ControllerContext = new ControllerContext
         {
