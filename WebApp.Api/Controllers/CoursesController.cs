@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApp.Api.Data;
+using WebApp.Api.DAL;
 using WebApp.Api.Dtos;
 using WebApp.Api.Models;
 
@@ -12,12 +11,12 @@ namespace WebApp.Api.Controllers;
 [Route("api/courses")]
 public class CoursesController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly ICourseRepository _courses;
     private readonly ILogger<CoursesController> _logger;
 
-    public CoursesController(AppDbContext db, ILogger<CoursesController> logger)
+    public CoursesController(ICourseRepository courses, ILogger<CoursesController> logger)
     {
-        _db = db;
+        _courses = courses;
         _logger = logger;
     }
 
@@ -25,15 +24,7 @@ public class CoursesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<CourseDto>>> GetAll(string? search)
     {
-        var query = _db.Courses.AsNoTracking().Include(c => c.Quests).AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var text = search.Trim();
-            query = query.Where(c => EF.Functions.Like(c.Code, $"%{text}%") || EF.Functions.Like(c.Title, $"%{text}%"));
-        }
-
-        var courses = await query.OrderBy(c => c.Title).ToListAsync();
+        var courses = await _courses.GetAllAsync(search);
         return courses.Select(c => c.ToDto()).ToList();
     }
 
@@ -41,9 +32,7 @@ public class CoursesController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult<CourseDetailDto>> Get(int id)
     {
-        var course = await _db.Courses.AsNoTracking()
-            .Include(c => c.Quests.OrderBy(q => q.Title))
-            .FirstOrDefaultAsync(c => c.Id == id);
+        var course = await _courses.GetWithQuestsAsync(id);
         if (course is null)
         {
             _logger.LogWarning("Course {CourseId} not found", id);
@@ -64,8 +53,7 @@ public class CoursesController : ControllerBase
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
         var course = new Course { Code = form.Code, Title = form.Title, Description = form.Description };
-        _db.Courses.Add(course);
-        await _db.SaveChangesAsync();
+        await _courses.AddAsync(course);
 
         _logger.LogInformation("Created course {CourseId} ({Code})", course.Id, course.Code);
         return CreatedAtAction(nameof(Get), new { id = course.Id }, course.ToDto());
@@ -76,7 +64,7 @@ public class CoursesController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, CourseFormDto form)
     {
-        var course = await _db.Courses.FindAsync(id);
+        var course = await _courses.GetByIdAsync(id);
         if (course is null) return NotFound();
 
         Normalize(form);
@@ -86,7 +74,7 @@ public class CoursesController : ControllerBase
         course.Code = form.Code;
         course.Title = form.Title;
         course.Description = form.Description;
-        await _db.SaveChangesAsync();
+        await _courses.UpdateAsync(course);
 
         _logger.LogInformation("Updated course {CourseId} ({Code})", id, course.Code);
         return NoContent();
@@ -97,11 +85,10 @@ public class CoursesController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var course = await _db.Courses.FindAsync(id);
+        var course = await _courses.GetByIdAsync(id);
         if (course is null) return NotFound();
 
-        _db.Courses.Remove(course);
-        await _db.SaveChangesAsync();
+        await _courses.DeleteAsync(course);
 
         _logger.LogInformation("Deleted course {CourseId} ({Code})", id, course.Code);
         return NoContent();
@@ -117,10 +104,10 @@ public class CoursesController : ControllerBase
 
     private async Task CheckDuplicatesAsync(CourseFormDto form, int courseId)
     {
-        if (await _db.Courses.AnyAsync(c => c.Code == form.Code && c.Id != courseId))
+        if (await _courses.CodeExistsAsync(form.Code, courseId))
             ModelState.AddModelError(nameof(CourseFormDto.Code), "A course with this code already exists.");
 
-        if (await _db.Courses.AnyAsync(c => c.Title == form.Title && c.Id != courseId))
+        if (await _courses.TitleExistsAsync(form.Title, courseId))
             ModelState.AddModelError(nameof(CourseFormDto.Title), "A course with this title already exists.");
     }
 }

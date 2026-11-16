@@ -25,6 +25,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IQuestRepository, QuestRepository>();
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddSingleton<QuestGradingService>();
 builder.Services.AddScoped<QuestScoringService>();
 builder.Services.AddScoped<StreakService>();
