@@ -693,6 +693,22 @@ pre {
   white-space: nowrap;
 }
 
+.leaderboard .rank-cell {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--muted);
+  width: 70px;
+}
+
+.leaderboard tr.me td {
+  background: rgba(99, 102, 241, 0.15);
+}
+
+.xp-cell {
+  color: var(--sky);
+  font-weight: 700;
+}
+
 /* ---------- Filters ---------- */
 
 .filters {

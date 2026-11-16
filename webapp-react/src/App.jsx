@@ -7,9 +7,11 @@ import CourseDetailPage from './pages/CourseDetailPage'
 import CourseFormPage from './pages/CourseFormPage'
 import CoursesPage from './pages/CoursesPage'
 import HomePage from './pages/HomePage'
+import LeaderboardPage from './pages/LeaderboardPage'
 import LoginPage from './pages/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
 import PlayQuestPage from './pages/PlayQuestPage'
+import ProfilePage from './pages/ProfilePage'
 import QuestFormPage from './pages/QuestFormPage'
 import QuestsPage from './pages/QuestsPage'
 import UserFormPage from './pages/UserFormPage'
@@ -46,6 +48,15 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <PlayQuestPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
                   </ProtectedRoute>
                 }
               />
