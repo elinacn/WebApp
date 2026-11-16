@@ -12,6 +12,8 @@ import NotFoundPage from './pages/NotFoundPage'
 import PlayQuestPage from './pages/PlayQuestPage'
 import QuestFormPage from './pages/QuestFormPage'
 import QuestsPage from './pages/QuestsPage'
+import UserFormPage from './pages/UserFormPage'
+import UsersPage from './pages/UsersPage'
 
 export default function App() {
   return (
@@ -62,6 +64,30 @@ export default function App() {
                 element={
                   <ProtectedRoute adminOnly>
                     <CourseFormPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/users"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <UsersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/users/new"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <UserFormPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/users/:id/edit"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <UserFormPage />
                   </ProtectedRoute>
                 }
               />
