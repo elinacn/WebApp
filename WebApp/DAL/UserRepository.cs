@@ -18,6 +18,12 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByIdAsync(int id) => await _context.Users.FindAsync(id);
 
+    public Task<User?> GetByUsernameAsync(string username)
+    {
+        var name = username.Trim().ToLower();
+        return _context.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == name);
+    }
+
     public Task<bool> ExistsAsync(int id) => _context.Users.AnyAsync(u => u.Id == id);
 
     public Task<bool> UsernameExistsAsync(string username, int excludeId = 0) =>

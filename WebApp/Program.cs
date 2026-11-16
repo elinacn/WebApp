@@ -40,8 +40,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Events.OnValidatePrincipal = async context =>
         {
             var userId = context.Principal?.GetUserId();
-            var db = context.HttpContext.RequestServices.GetRequiredService<SheetsDbContext>();
-            var user = userId is null ? null : await db.Users.FindAsync(userId);
+            var users = context.HttpContext.RequestServices.GetRequiredService<WebApp.DAL.IUserRepository>();
+            var user = userId is null ? null : await users.GetByIdAsync(userId.Value);
             if (user is null)
             {
                 context.RejectPrincipal();
@@ -67,7 +67,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             if (user.LastSeenAt is null || now - user.LastSeenAt > TimeSpan.FromMinutes(1))
             {
                 user.LastSeenAt = now;
-                await db.SaveChangesAsync();
+                await users.UpdateAsync(user);
             }
         };
 

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
+using WebApp.DAL;
 
 namespace WebApp.Controllers;
 
@@ -14,14 +15,14 @@ namespace WebApp.Controllers;
 // which the rest of the app reads with User.GetUserId().
 public class AccountController : Controller
 {
-    private readonly SheetsDbContext _context;
+    private readonly IUserRepository _users;
     private readonly IWebHostEnvironment _environment;
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly ILogger<AccountController> _logger;
 
-    public AccountController(SheetsDbContext context, IPasswordHasher<User> passwordHasher, ILogger<AccountController> logger, IWebHostEnvironment environment)
+    public AccountController(IUserRepository users, IPasswordHasher<User> passwordHasher, ILogger<AccountController> logger, IWebHostEnvironment environment)
     {
-        _context = context;
+        _users = users;
         _environment = environment;
         _passwordHasher = passwordHasher;
         _logger = logger;
@@ -43,7 +44,7 @@ public class AccountController : Controller
         return NoAdminExistsAsync();
     }
 
-    private async Task<bool> NoAdminExistsAsync() => !await _context.Users.AnyAsync(u => u.IsAdmin);
+    private async Task<bool> NoAdminExistsAsync() => await _users.CountAdminsAsync() == 0;
 
     [HttpGet]
     public async Task<IActionResult> SetupAdmin()
@@ -59,7 +60,7 @@ public class AccountController : Controller
         if (!await CanSetupAdminAsync()) return NotFound();
         if (PasswordRules.Validate(model.Password) is string error)
             ModelState.AddModelError(nameof(model.Password), error);
-        if (await _context.Users.AnyAsync(u => u.Username.ToLower() == "admin"))
+        if (await _users.GetByUsernameAsync("admin") is not null)
             ModelState.AddModelError(string.Empty, "An account named admin already exists. Choose another bootstrap account with your team.");
         if (!ModelState.IsValid) return View(model);
 
@@ -67,8 +68,7 @@ public class AccountController : Controller
         user.PasswordHash = _passwordHasher.HashPassword(user, model.Password);
         try
         {
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            await _users.AddAsync(user);
         }
         catch (DbUpdateException ex)
         {
@@ -102,7 +102,7 @@ public class AccountController : Controller
         }
 
         var name = username.Trim().ToLower();
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == name);
+        var user = await _users.GetByUsernameAsync(name);
 
         // Same message whether the username or the password is wrong, so the form
         // doesn't reveal which usernames exist
@@ -120,7 +120,7 @@ public class AccountController : Controller
         if (result == PasswordVerificationResult.SuccessRehashNeeded)
         {
             user.PasswordHash = _passwordHasher.HashPassword(user, password);
-            await _context.SaveChangesAsync();
+            await _users.UpdateAsync(user);
         }
 
         // The cookie carries these claims; the ID is how every later request knows who this is
