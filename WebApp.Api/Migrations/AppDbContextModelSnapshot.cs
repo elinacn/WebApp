@@ -42,7 +42,7 @@ namespace WebApp.Api.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("Courses");
+                    b.ToTable("Courses", (string)null);
                 });
 
             modelBuilder.Entity("WebApp.Api.Models.DailyActivity", b =>
@@ -62,7 +62,7 @@ namespace WebApp.Api.Migrations
                     b.HasIndex("UserId", "Date")
                         .IsUnique();
 
-                    b.ToTable("DailyActivities");
+                    b.ToTable("DailyActivities", (string)null);
                 });
 
             modelBuilder.Entity("WebApp.Api.Models.Quest", b =>
@@ -98,7 +98,7 @@ namespace WebApp.Api.Migrations
                     b.HasIndex("Title")
                         .IsUnique();
 
-                    b.ToTable("Quests");
+                    b.ToTable("Quests", (string)null);
                 });
 
             modelBuilder.Entity("WebApp.Api.Models.QuestCompletion", b =>
@@ -135,7 +135,7 @@ namespace WebApp.Api.Migrations
                     b.HasIndex("UserId", "QuestId")
                         .IsUnique();
 
-                    b.ToTable("QuestCompletions");
+                    b.ToTable("QuestCompletions", (string)null);
                 });
 
             modelBuilder.Entity("WebApp.Api.Models.QuestOption", b =>
@@ -161,7 +161,7 @@ namespace WebApp.Api.Migrations
 
                     b.HasIndex("QuestQuestionId");
 
-                    b.ToTable("QuestOptions");
+                    b.ToTable("QuestOptions", (string)null);
                 });
 
             modelBuilder.Entity("WebApp.Api.Models.QuestQuestion", b =>
@@ -212,7 +212,7 @@ namespace WebApp.Api.Migrations
 
                     b.HasIndex("QuestId");
 
-                    b.ToTable("QuestQuestions");
+                    b.ToTable("QuestQuestions", (string)null);
                 });
 
             modelBuilder.Entity("WebApp.Api.Models.User", b =>
@@ -259,7 +259,7 @@ namespace WebApp.Api.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("WebApp.Api.Models.DailyActivity", b =>

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApp.Api.Models;
 
 namespace WebApp.Api.Data;
@@ -53,4 +54,15 @@ public class AppDbContext : DbContext
             .HasOne(a => a.User).WithMany()
             .HasForeignKey(a => a.UserId).OnDelete(DeleteBehavior.Cascade);
     }
+
+    // All dates are saved in UTC. SQLite doesn't store that, so mark them as UTC when
+    // reading; the JSON then ends in "Z" and the browser shows them in local time.
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+    }
+
+    private sealed class UtcDateTimeConverter() : ValueConverter<DateTime, DateTime>(
+        v => v.ToUniversalTime(),
+        v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 }
