@@ -3,6 +3,9 @@ import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import AuthProvider from './context/AuthProvider'
 import ToastProvider from './context/ToastProvider'
+import CourseDetailPage from './pages/CourseDetailPage'
+import CourseFormPage from './pages/CourseFormPage'
+import CoursesPage from './pages/CoursesPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -41,6 +44,24 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <PlayQuestPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/courses" element={<CoursesPage />} />
+              <Route
+                path="/courses/new"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <CourseFormPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/courses/:id" element={<CourseDetailPage />} />
+              <Route
+                path="/courses/:id/edit"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <CourseFormPage />
                   </ProtectedRoute>
                 }
               />

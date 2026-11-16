@@ -717,6 +717,31 @@ pre {
   gap: 20px;
 }
 
+/* ---------- Course detail ---------- */
+
+.course-quest-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.course-quest-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--slate);
+}
+
+.course-quest-list li:last-child {
+  border-bottom: none;
+}
+
+.course-quest-list li span:first-child {
+  flex: 1;
+  font-weight: 600;
+}
+
 /* ---------- Login ---------- */
 
 .login-page {
