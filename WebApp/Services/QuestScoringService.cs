@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+using WebApp.DAL;
 using WebApp.Models;
 
 namespace WebApp.Services;
@@ -11,33 +11,35 @@ public record QuestResult(int Score, int MaxScore, int PointsAwarded, int BestSc
 // User.Points is the shared XP total used by the profile, home page and leaderboard.
 public class QuestScoringService
 {
-    private readonly SheetsDbContext _context;
+    private readonly IUserRepository _users;
+    private readonly IQuestRepository _quests;
+    private readonly IProgressRepository _progress;
     private readonly ILogger<QuestScoringService> _logger;
 
-    public QuestScoringService(SheetsDbContext context, ILogger<QuestScoringService> logger)
+    public QuestScoringService(IUserRepository users, IQuestRepository quests, IProgressRepository progress, ILogger<QuestScoringService> logger)
     {
-        _context = context;
+        _users = users;
+        _quests = quests;
+        _progress = progress;
         _logger = logger;
     }
 
     public async Task<QuestResult> RecordCompletionAsync(int userId, int questId, int score, int maxScore)
     {
-        var user = await _context.Users.FindAsync(userId)
+        var user = await _users.GetByIdAsync(userId)
             ?? throw new InvalidOperationException($"User {userId} does not exist.");
 
-        var quest = await _context.Quests.FindAsync(questId)
+        var quest = await _quests.GetByIdAsync(questId)
             ?? throw new InvalidOperationException($"Quest {questId} does not exist.");
         var completionXp = DifficultyRules.GetCompletionXp(quest.Difficulty);
 
-        var completion = await _context.QuestCompletions
-            .FirstOrDefaultAsync(c => c.UserId == userId && c.QuestId == questId);
+        var completion = await _progress.GetCompletionAsync(userId, questId);
         var now = DateTime.UtcNow;
         var firstCompletion = completion is null;
 
         if (completion is null)
         {
             completion = new QuestCompletion { UserId = userId, QuestId = questId, FirstCompletedAt = now };
-            _context.QuestCompletions.Add(completion);
             user.QuizzesCompleted++;
         }
 
@@ -48,7 +50,7 @@ public class QuestScoringService
         completion.LastCompletedAt = now;
         user.Points += pointsAwarded;
 
-        await _context.SaveChangesAsync();
+        await _progress.SaveCompletionAsync(completion);
 
         _logger.LogInformation(
             "User {UserId} completed quest {QuestId}: {Score}/{MaxScore}, +{PointsAwarded} XP (best {BestScore}, attempt {Attempt})",

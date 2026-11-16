@@ -71,7 +71,8 @@ public class SubmissionSaveTests
         await context.SaveChangesAsync();
         failure.Enabled = true;
         var controller = new QuestsController(NullLogger<QuestsController>.Instance, new QuestRepository(context),
-            new DailyStreakService(context), new QuestScoringService(context, NullLogger<QuestScoringService>.Instance));
+            new DailyStreakService(new ProgressRepository(context)),
+            new QuestScoringService(new UserRepository(context), new QuestRepository(context), new ProgressRepository(context), NullLogger<QuestScoringService>.Instance));
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext
