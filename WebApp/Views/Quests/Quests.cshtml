@@ -41,7 +41,7 @@
         @if (Model.ActiveSection == "library")
         {
             <section class="quests-section" data-bs-theme="dark">
-                <h2 class="quests-heading">My Quests</h2>
+                <h2 class="quests-heading">@(User.IsInRole(WebApp.Models.AppRoles.Admin) ? "All Quests" : User.Identity?.IsAuthenticated == true ? "My Quests" : "Quests")</h2>
 
                 @if (!Model.MyQuests.Any())
                 {
@@ -60,10 +60,19 @@
                                 <div class="quest-card-play">
                                     <a class="quests-apply" asp-controller="Quests" asp-action="Play" asp-route-id="@quest.Id">Start</a>
                                 </div>
-                                <div class="quest-card-actions">
-                                    <a asp-controller="Quests" asp-action="Edit" asp-route-id="@quest.Id">Edit</a>
-                                    <a asp-controller="Quests" asp-action="Delete" asp-route-id="@quest.Id">Delete</a>
-                                </div>
+                                @if (quest.CanEdit || quest.CanDelete)
+                                {
+                                    <div class="quest-card-actions">
+                                        @if (quest.CanEdit)
+                                        {
+                                            <a asp-controller="Quests" asp-action="Edit" asp-route-id="@quest.Id">Edit</a>
+                                        }
+                                        @if (quest.CanDelete)
+                                        {
+                                            <a asp-controller="Quests" asp-action="Delete" asp-route-id="@quest.Id">Delete</a>
+                                        }
+                                    </div>
+                                }
                             </article>
                         }
                     </div>

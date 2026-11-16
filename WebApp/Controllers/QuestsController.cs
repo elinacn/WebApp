@@ -9,19 +9,7 @@ using WebApp.Services;
 
 namespace WebApp.Controllers;
 
- /*
-    For the database: 
-    LoadContinueQuests returns the in-progress quests as the questcardviewmmodel items with difficulty for filters
-    LoadCompletedQuests returns completed quests as QCVM items etc
-    LoadFeatured loads featured quests with qcvm etc
-    LoadRecommendedQuests (You can tell by the title)
-    LoadSavedQuest should returns quests that the current user has saved
-    toggleSave should save the quest or not (if its already saved)
-    Create creates a quest json file under tasks as of now this should probably be stored in the database (should've called it CreateQuest or something but can fix that later)
-
-
-
- */
+// Students create/edit their own quests; admins manage all quests.
 public class QuestsController : Controller
 {
     private readonly ILogger<QuestsController> _logger;
@@ -49,6 +37,12 @@ public class QuestsController : Controller
         if (section is not "library" and not "explore" and not "saved" and not "create")
         {
             section = "library";
+        }
+
+        // The library stays public; creating content requires a signed-in user.
+        if (section == "create" && User.Identity?.IsAuthenticated != true)
+        {
+            return Challenge();
         }
 
         var filter = new QuestFilterViewModel
@@ -233,6 +227,7 @@ public class QuestsController : Controller
     // Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize]
     public async Task<IActionResult> Create(
         [Bind(Prefix = "NewQuest")] CreateQuestViewModel newQuest,
         int? addQuestion,
@@ -251,7 +246,9 @@ public class QuestsController : Controller
 
         if (!ModelState.IsValid) return await CreateFormAsync(newQuest, clearModelState: false);
 
-        var quest = new Quest { CreatedAt = DateTime.Today };
+        var creatorId = User.GetUserId();
+        if (creatorId is null) return Forbid();
+        var quest = new Quest { CreatedAt = DateTime.Today, CreatorUserId = creatorId };
         ApplyToEntity(quest, newQuest);
 
         try
@@ -272,6 +269,7 @@ public class QuestsController : Controller
     }
 
     // Update
+    [Authorize]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id is null) return BadRequest();
@@ -286,6 +284,8 @@ public class QuestsController : Controller
             return NotFound();
         }
 
+        if (!CanEditQuest(quest)) return Forbid();
+
         var newQuest = ToViewModel(quest);
         PrepareQuestions(newQuest);
         return await CreateFormAsync(newQuest, clearModelState: false);
@@ -293,6 +293,7 @@ public class QuestsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize]
     public async Task<IActionResult> Edit(
         int id,
         [Bind(Prefix = "NewQuest")] CreateQuestViewModel newQuest,
@@ -300,6 +301,9 @@ public class QuestsController : Controller
         int? removeQuestion)
     {
         if (id != newQuest.Id) return BadRequest();
+        var permission = await _context.Quests.AsNoTracking().FirstOrDefaultAsync(q => q.Id == id);
+        if (permission is null) return NotFound();
+        if (!CanEditQuest(permission)) return Forbid();
 
         PrepareQuestions(newQuest);
 
@@ -352,6 +356,7 @@ public class QuestsController : Controller
     }
 
     // Delete
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id is null) return BadRequest();
@@ -369,6 +374,7 @@ public class QuestsController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var quest = await _context.Quests.FindAsync(id);
@@ -424,6 +430,10 @@ public class QuestsController : Controller
     private async Task<List<QuestListItemViewModel>> LoadMyQuestsAsync(QuestFilterViewModel? filter = null)
     {
         var query = _context.Quests.AsNoTracking();
+        var userId = User.GetUserId();
+        var isAdmin = User.IsInRole(AppRoles.Admin);
+        if (userId.HasValue && !isAdmin)
+            query = query.Where(q => q.CreatorUserId == userId.Value);
 
         if (!string.IsNullOrWhiteSpace(filter?.SearchText))
         {
@@ -446,11 +456,16 @@ public class QuestsController : Controller
             Difficulty = q.Difficulty,
             CreatedAt = q.CreatedAt,
             QuestionCount = q.Questions.Count,
-            TotalPoints = q.Questions.Sum(x => (int?)x.Points) ?? 0
+            TotalPoints = q.Questions.Sum(x => (int?)x.Points) ?? 0,
+            CanEdit = isAdmin || (userId.HasValue && q.CreatorUserId == userId.Value),
+            CanDelete = isAdmin
         })
         .ToListAsync();
     }
     
+
+    private bool CanEditQuest(Quest quest) => User.IsInRole(AppRoles.Admin)
+        || (User.GetUserId() is int userId && quest.CreatorUserId == userId);
 
     private static void PrepareQuestions(CreateQuestViewModel newQuest)
     {
@@ -555,6 +570,8 @@ public class QuestsController : Controller
                     Question = q.Question,
                     Points = q.Points,
                     Explaination = q.Explaination,
+                    StartCode = q.StartCode,
+                    AcceptedCode = q.AcceptedCode,
                     CaseSensitive = q.CaseSensitive,
                     AcceptedAnswers = (q.AcceptedAnswers ?? string.Empty)
                         .Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)

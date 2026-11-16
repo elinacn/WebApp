@@ -1,0 +1,26 @@
+@model WebApp.ViewModels.AdminSetupViewModel
+@{
+    ViewData["Title"] = "Set up admin";
+}
+<div class="container py-4 text-light" data-bs-theme="dark">
+    <h1>Set up your admin account</h1>
+    <p>Username: <strong>admin</strong></p>
+    <p>Choose a password for the first administrator. This setup is available only on this computer until an admin account exists.</p>
+    <form asp-action="SetupAdmin" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="mb-3">
+            <label asp-for="Password" class="form-label"></label>
+            <input asp-for="Password" type="password" class="form-control" autocomplete="new-password" />
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="ConfirmPassword" class="form-label">Confirm password</label>
+            <input asp-for="ConfirmPassword" type="password" class="form-control" autocomplete="new-password" />
+            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Create admin account</button>
+    </form>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -40,6 +40,11 @@
             @Html.ValidationMessage("password", new { @class = "text-danger" })
         </div>
 
+        <div class="mb-3 form-check">
+            <input asp-for="IsAdmin" class="form-check-input" />
+            <label asp-for="IsAdmin" class="form-check-label">Admin access</label>
+        </div>
+
         <button type="submit" class="btn btn-primary">Save</button>
         <a asp-action="Index" class="btn btn-secondary">Cancel</a>
     </form>

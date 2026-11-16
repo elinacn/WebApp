@@ -61,10 +61,29 @@ body {
 }
 
 .navbar-logo {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #D9D9D9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 4px;
+  border-radius: 12px;
   text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.navbar-logo-image {
+  display: block;
+  width: 48px;
+  height: 48px;
+}
+
+.navbar-logo:hover {
+  transform: translateY(-2px);
+}
+
+.navbar-logo:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
 }
 
 .navbar-links {

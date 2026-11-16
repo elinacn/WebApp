@@ -19,6 +19,10 @@ public class Quest
 
     public DateTime CreatedAt { get; set; } = DateTime.Today;
 
+    // Older quests have no known creator; only admins may edit them.
+    public int? CreatorUserId { get; set; }
+    public User? Creator { get; set; }
+
     // Optional for now: the create-quest form doesn't ask for a course yet
     public int? CourseId { get; set; }
     public Course? Course { get; set; }

@@ -30,6 +30,7 @@ public class ProfileController : Controller
 
         var model = new ProfileViewModel
         {
+            Id = user.Id,
             Name = user.Name,
             Username = user.Username,
             TotalXp = user.Points,

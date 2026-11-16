@@ -2,6 +2,7 @@ namespace WebApp.ViewModels;
 
 public class ProfileViewModel
 {
+    public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
     public int Streak { get; set; }
