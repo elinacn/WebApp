@@ -32,6 +32,8 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<UserDto>> Login(LoginDto login)
     {
+        if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
         var name = login.Username.Trim().ToLower();
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == name);
 

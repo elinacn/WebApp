@@ -10,7 +10,10 @@ using WebApp.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+// Actions check ModelState themselves, so the basic checks (data annotations) and the
+// domain rules are returned together in one response instead of in two rounds
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options => options.SuppressModelStateInvalidFilter = true);
 builder.Services.AddOpenApi();
 
 // Errors are returned as JSON ProblemDetails; unhandled exceptions are logged by GlobalExceptionHandler

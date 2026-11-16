@@ -88,8 +88,9 @@ public static class DtoMapper
             }
             else
             {
-                question.CaseSensitive = source.Type == QuestionTypes.FreeText && source.CaseSensitive;
-                question.AcceptedAnswers = string.Join("\n", CleanAnswers(source.AcceptedAnswers));
+                // Code is always compared case-sensitively; free text only when ticked
+                question.CaseSensitive = source.Type == QuestionTypes.Code || source.CaseSensitive;
+                question.AcceptedAnswers = string.Join("\n", CleanAnswers(source.AcceptedAnswers, question.CaseSensitive));
                 if (source.Type == QuestionTypes.Code)
                     question.StartCode = (source.StartCode ?? string.Empty).Replace("\r\n", "\n").TrimEnd();
             }
@@ -98,9 +99,13 @@ public static class DtoMapper
         }
     }
 
-    // Non-empty, trimmed and without duplicates
-    public static List<string> CleanAnswers(IEnumerable<string?> answers) =>
-        answers.Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a!.Trim()).Distinct().ToList();
+    // Non-empty, trimmed and without duplicates ("Oslo" and "oslo" are the same unless case-sensitive)
+    public static List<string> CleanAnswers(IEnumerable<string?> answers, bool caseSensitive = true) =>
+        answers
+            .Where(a => !string.IsNullOrWhiteSpace(a))
+            .Select(a => a!.Trim())
+            .Distinct(caseSensitive ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
     public static List<string> SplitLines(string? text) =>
         (text ?? string.Empty).Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
