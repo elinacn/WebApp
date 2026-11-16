@@ -1,42 +1,44 @@
+@model WebApp.ViewModels.ProfileViewModel
 @{
     ViewData["Title"] = "Profile";
 }
 
-@* Placeholder data until we can connect the stuff together. *@
+@* Profile details and progress use the signed-in user. Achievements are still placeholders. *@
 <link rel="stylesheet" href="~/css/profile.css" asp-append-version="true" />
 
 <main class="profile-container">
     <div class="profile-title-bar">
         <h1>Profile</h1>
-        <span class="profile-preview-label">Sample profile</span>
+        <span class="profile-preview-label">Your profile</span>
     </div>
 
     <section class="profile-header">
-        <div class="profile-avatar">PN</div>
+        <div class="profile-avatar">@Model.Initials</div>
         <div class="profile-user-details">
             <p class="profile-label">Your learning journey</p>
-            <h2 id="profile-name">Profile name</h2>
-            <p class="profile-username">@("@ProfileName")</p>
+            <h2 id="profile-name">@Model.Name</h2>
+            <p class="profile-username">@($"@{Model.Username}")</p>
             <p class="profile-bio">I love questions!</p>
+            <a asp-controller="Users" asp-action="Edit" asp-route-id="@Model.Id">Edit profile</a>
         </div>
         <div class="profile-streak">
             <span class="profile-streak-icon">🔥</span>
-            <p>Current streak:<strong>@ViewData["Streak"] days</strong></p>
+            <p>Current streak:<strong>@Model.Streak days</strong></p>
         </div>
     </section>
 
     <section class="profile-progress">
         <div class="profile-progress-heading">
-            <h2 id="profile-level">Level 2</h2>
-            <span>400 / 1,100 XP</span>
+            <h2 id="profile-level">Level @Model.Level</h2>
+            <span>@Model.TotalXp total XP</span>
         </div>
-        <progress class="profile-progress-bar" value="400" max="1100">400 / 1,100 XP</progress>
-        <p>700 XP to level 3</p>
+        <progress class="profile-progress-bar" value="@Model.XpInCurrentLevel" max="@WebApp.ViewModels.ProfileViewModel.XpPerLevel">@Model.XpInCurrentLevel / @WebApp.ViewModels.ProfileViewModel.XpPerLevel XP</progress>
+        <p>@Model.XpInCurrentLevel / @WebApp.ViewModels.ProfileViewModel.XpPerLevel XP in this level · @Model.XpToNextLevel XP to level @(Model.Level + 1)</p>
     </section>
 
     <section class="profile-stats">
-        <div class="profile-stat-card"><strong>12</strong><span>Quizzes completed</span></div>
-        <div class="profile-stat-card"><strong>5</strong><span>Challenges completed</span></div>
+        <div class="profile-stat-card"><strong>@Model.QuizzesCompleted</strong><span>Quizzes completed</span></div>
+        <div class="profile-stat-card"><strong>@Model.ChallengesCompleted</strong><span>Challenges completed</span></div>
         <div class="profile-stat-card"><strong>3</strong><span>Achievements earned</span></div>
     </section>
 
@@ -57,11 +59,28 @@
 
     <section class="profile-activity">
         <h2 id="profile-activity-title">Recent activity</h2>
-        <ul class="profile-activity-list">
-            <li><div><strong>HTML quiz completed</strong><span>8 / 10 correct * 2 days ago</span></div><span class="profile-xp">+80 XP</span></li>
-            <li><div><strong>CSS quiz completed</strong><span>7 / 8 correct * 4 days ago</span></div><span class="profile-xp">+70 XP</span></li>
-            <li><div><strong>First quest achievement</strong><span>First quiz completed * 5 days ago</span></div><span class="profile-xp">+25 XP</span></li>
-        </ul>
+        @if (Model.RecentActivity.Count == 0)
+        {
+            <p>No quiz activity yet. Complete a quest to see it here.</p>
+        }
+        else
+        {
+            <p>Your five most recently completed quests. Retakes update the same entry.</p>
+            <ul class="profile-activity-list">
+                @foreach (var activity in Model.RecentActivity)
+                {
+                    <li>
+                        <div>
+                            <strong>@activity.QuestTitle completed</strong>
+                            <span>
+                                <time datetime="@DateTime.SpecifyKind(activity.CompletedAtUtc, DateTimeKind.Utc).ToString("O")">@activity.CompletedAtOslo.ToString("dd MMM yyyy, HH:mm", System.Globalization.CultureInfo.InvariantCulture)</time>
+                                · @activity.Attempts @(activity.Attempts == 1 ? "attempt" : "attempts")
+                            </span>
+                        </div>
+                        <span class="profile-xp">Best: @activity.BestScore / @activity.MaxScore pts</span>
+                    </li>
+                }
+            </ul>
+        }
     </section>
-    <p class="profile-placeholder-note">placeholder for something else.</p>
 </main>

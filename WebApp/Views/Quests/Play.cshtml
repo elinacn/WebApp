@@ -6,11 +6,11 @@
 
 <link rel="stylesheet" href="~/css/quests.css" asp-append-version="true" />
 
-<div class="quests-page">
+<div class="quests-page quests-play-page">
     <div class="quests-main">
         <section class="quests-create-panel">
             <h2 class="quests-heading">@Model.Title</h2>
-            <p class="quests-create-hint">@Model.Difficulty</p>
+            <p class="quests-create-hint">@Model.Difficulty · @Model.XpReward XP on first completion</p>
             @if (!string.IsNullOrWhiteSpace(Model.Description))
             {
                 <p class="quests-create-hint">@Model.Description</p>
@@ -19,9 +19,15 @@
             @if (Model.Submitted)
             {
                 var result = Model.Result;
-                <div class="quests-play-result" role="status">
+                var outcome = result is null || result.MaxScore <= 0 ? null
+                    : result.Score <= 0 ? "none"
+                    : result.Score >= result.MaxScore ? "perfect"
+                    : result.Score * 2 >= result.MaxScore ? "high"
+                    : "low";
+                <div class="quests-play-result" role="status" data-quest-outcome="@outcome">
                     @if (result is null)
                     {
+                        <p class="quests-play-score">You scored <strong>@Model.Questions.Where(q => q.IsCorrect).Sum(q => q.Points) of @Model.Questions.Sum(q => q.Points)</strong> points.</p>
                         <p class="text-danger">@Model.ResultError</p>
                     }
                     else
@@ -29,16 +35,16 @@
                         <p class="quests-play-score">You scored <strong>@result.Score of @result.MaxScore</strong> points.</p>
                         @if (result.PointsAwarded > 0)
                         {
-                            <p>+@result.PointsAwarded code points! You now have @result.TotalPoints in total.</p>
-                        }
-                        else if (result.FirstCompletion)
-                        {
-                            <p>No code points this time. Try again to earn some.</p>
+                            <p>+@result.PointsAwarded XP! You now have @result.TotalPoints XP in total.</p>
                         }
                         else
                         {
-                            <p>No new code points: your best on this quest is @result.BestScore of @result.MaxScore. Beat it to earn the difference.</p>
+                            <p>You already earned the XP for this quest. Your best score is @result.BestScore of @result.MaxScore. Retakes do not award extra XP.</p>
                         }
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.StreakError))
+                    {
+                        <p class="text-warning">@Model.StreakError</p>
                     }
                 </div>
             }
@@ -139,3 +145,26 @@
         </section>
     </div>
 </div>
+
+// sound effects script to choose which file should play for outcome
+@section Scripts {
+    <script>
+        (()=>{
+            const el = document.querySelector('[data-quest-outcome]');
+            if(!el) return;
+
+            const src = {
+                none: '@Url.Content("~/sounds/quest-none.wav")',
+                low: '@Url.Content("~/sounds/quest-low.wav")',
+                high: '@Url.Content("~/sounds/quest-high.wav")' ,
+                perfect: '@Url.Content("~/sounds/quest-perfect.wav")'
+
+            }[el.dataset.questOutcome];
+            if(!src) return;
+
+            const audio = new Audio(src);
+            audio.volume = 0.5;
+            audio.play().catch(() => { });
+        })();
+    </script>
+}

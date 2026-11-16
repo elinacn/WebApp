@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
+using Microsoft.AspNetCore.Authorization;
+using WebApp.Extensions;
 
 namespace WebApp.Controllers;
 
@@ -19,6 +21,7 @@ public class UsersController : Controller
     }
 
     // READ: list, highest points first
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Index()
     {
         var users = await _context.Users.AsNoTracking()
@@ -29,6 +32,7 @@ public class UsersController : Controller
     }
 
     // READ: single
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Details(int? id)
     {
         if (id is null) return BadRequest();
@@ -43,13 +47,15 @@ public class UsersController : Controller
     }
 
     // CREATE
+    [Authorize(Roles = AppRoles.Admin)]
     public IActionResult Create() => View(new User());
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     // Points and QuizzesCompleted are left out on purpose: they come from quiz results, not this form.
     // The password is a separate field so it is never bound onto the entity or shown again.
-    public async Task<IActionResult> Create([Bind("Username,Name,StudyProgram,CreatedAt")] User user, string? password)
+    [Authorize(Roles = AppRoles.Admin)]
+    public async Task<IActionResult> Create([Bind("Username,Name,StudyProgram,CreatedAt,IsAdmin")] User user, string? password)
     {
         // Custom server-side rules on top of the data annotations
         if (await _context.Users.AnyAsync(u => u.Username == user.Username))
@@ -78,18 +84,34 @@ public class UsersController : Controller
     }
 
     // UPDATE
+    [Authorize]
     public async Task<IActionResult> Edit(int? id)
     {
-        if (id is null) return BadRequest();
-        var user = await _context.Users.FindAsync(id);
+        if (id is null)
+        {
+            return BadRequest();
+        }
+
+        if (!User.IsInRole(AppRoles.Admin) && id.Value != User.GetUserId())
+        {
+            return Forbid();
+        }
+
+        var user = await _context.Users.FindAsync(id.Value);
+
         return user is null ? NotFound() : View(user);
     }
 
+    [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
     // newPassword is optional: leave it empty to keep the current password
-    public async Task<IActionResult> Edit(int id, [Bind("Id,Username,Name,StudyProgram,CreatedAt")] User user, string? newPassword)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Username,Name,StudyProgram,CreatedAt,IsAdmin")] User user, string? newPassword, string? currentPassword)
     {
+        if (!User.IsInRole(AppRoles.Admin) && id != User.GetUserId())
+        {
+            return Forbid();
+        }
         if (id != user.Id) return BadRequest();
 
         if (await _context.Users.AnyAsync(u => u.Username == user.Username && u.Id != id))
@@ -98,13 +120,35 @@ public class UsersController : Controller
         if (!string.IsNullOrEmpty(newPassword) && PasswordRules.Validate(newPassword) is string passwordError)
             ModelState.AddModelError(nameof(newPassword), passwordError);
 
+        var existing = await _context.Users.FindAsync(id);
+        if (existing is null) return NotFound();
+
+        if (User.IsInRole(AppRoles.Admin) && existing.IsAdmin && !user.IsAdmin
+            && await _context.Users.CountAsync(u => u.IsAdmin) <= 1)
+        {
+            ModelState.AddModelError(nameof(Models.User.IsAdmin), "Keep at least one admin account.");
+        }
+
+        if (!string.IsNullOrEmpty(newPassword) && id == User.GetUserId())
+        {
+            if (string.IsNullOrEmpty(currentPassword))
+            {
+                ModelState.AddModelError(nameof(currentPassword), "Enter your current password to change it.");
+            }
+            else if (existing.PasswordHash is null ||
+                _passwordHasher.VerifyHashedPassword(existing, existing.PasswordHash, currentPassword)
+                    == PasswordVerificationResult.Failed)
+            {
+                ModelState.AddModelError(nameof(currentPassword), "Your current password is incorrect.");
+            }
+        }
+
         if (!ModelState.IsValid) return View(user);
 
         // Copy only the editable fields onto the stored user, so Points and
         // QuizzesCompleted keep their values instead of being reset to 0
-        var existing = await _context.Users.FindAsync(id);
-        if (existing is null) return NotFound();
-
+        // Ignore any role field submitted by a regular user.
+        if (User.IsInRole(AppRoles.Admin)) existing.IsAdmin = user.IsAdmin;
         existing.Username = user.Username;
         existing.Name = user.Name;
         existing.StudyProgram = user.StudyProgram;
@@ -117,7 +161,9 @@ public class UsersController : Controller
             await _context.SaveChangesAsync();
             _logger.LogInformation("Updated user {UserId}{PasswordChanged}", id, string.IsNullOrEmpty(newPassword) ? "" : " (password changed)");
             TempData["Success"] = "User updated.";
-            return RedirectToAction(nameof(Index));
+            return User.IsInRole(AppRoles.Admin)
+                ? RedirectToAction(nameof(Index))
+                : RedirectToAction("Profile", "Profile");
         }
         catch (DbUpdateConcurrencyException ex)
         {
@@ -134,19 +180,27 @@ public class UsersController : Controller
     }
 
     // DELETE
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id is null) return BadRequest();
+
         var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
         return user is null ? NotFound() : View(user);
     }
 
+    [Authorize(Roles = AppRoles.Admin)]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var user = await _context.Users.FindAsync(id);
         if (user is null) return RedirectToAction(nameof(Index));
+        if (user.IsAdmin && await _context.Users.CountAsync(u => u.IsAdmin) <= 1)
+        {
+            TempData["Error"] = "You cannot delete the last admin account.";
+            return RedirectToAction(nameof(Index));
+        }
 
         try
         {

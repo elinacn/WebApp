@@ -15,3 +15,10 @@
 SheetsDB.db
 SheetsDB.db-shm
 SheetsDB.db-wal
+WebApp/SheetsDB.db
+WebApp/SheetsDB.db
+
+# Subapp 2 (API) database
+WebApp.Api/WebAppApi.db
+WebApp.Api/WebAppApi.db-shm
+WebApp.Api/WebAppApi.db-wal

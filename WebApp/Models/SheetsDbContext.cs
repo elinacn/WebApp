@@ -36,6 +36,10 @@ namespace WebApp.Models
             .HasOne(q => q.Course).WithMany(c => c.Quests)
             .HasForeignKey(q => q.CourseId).OnDelete(DeleteBehavior.SetNull);
 
+        modelBuilder.Entity<Quest>()
+            .HasOne(q => q.Creator).WithMany()
+            .HasForeignKey(q => q.CreatorUserId).OnDelete(DeleteBehavior.SetNull);
+
         // One completion row per user per quest; removed with the user or the quest
         modelBuilder.Entity<QuestCompletion>().HasIndex(c => new { c.UserId, c.QuestId }).IsUnique();
         modelBuilder.Entity<QuestCompletion>()

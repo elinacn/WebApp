@@ -78,6 +78,9 @@ namespace WebApp.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("CreatorUserId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
@@ -95,6 +98,8 @@ namespace WebApp.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CourseId");
+
+                    b.HasIndex("CreatorUserId");
 
                     b.HasIndex("Title")
                         .IsUnique();
@@ -229,6 +234,9 @@ namespace WebApp.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("LastSeenAt")
                         .HasColumnType("TEXT");
 
@@ -271,7 +279,14 @@ namespace WebApp.Migrations
                         .HasForeignKey("CourseId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("WebApp.Models.User", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatorUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Course");
+
+                    b.Navigation("Creator");
                 });
 
             modelBuilder.Entity("WebApp.Models.QuestCompletion", b =>

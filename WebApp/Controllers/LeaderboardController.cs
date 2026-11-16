@@ -16,42 +16,33 @@ public class LeaderboardController : Controller
 
     public IActionResult Index() => RedirectToAction(nameof(Leaderboard));
 
-    public async Task<IActionResult> Leaderboard(string? search, string? program)
+    public async Task<IActionResult> Leaderboard(string? search)
     {
-        var model = new LeaderboardViewModel
-        {
-            Search = search?.Trim() ?? string.Empty,
-            Program = program?.Trim() ?? string.Empty,
-            Programs = await _context.Users.AsNoTracking()
-                .Select(u => u.StudyProgram)
-                .Distinct()
-                .OrderBy(c => c)
-                .ToListAsync()
-        };
+        var query = _context.Users.AsNoTracking();
 
-        // Rank the selected program before searching so a name search keeps its rank.
-        var ranked = await _context.Users.AsNoTracking()
-            .Where(u => model.Program.Length == 0 || u.StudyProgram == model.Program)
-            .OrderByDescending(u => u.Points)
-            .ThenBy(u => u.Name)
-            .Select(u => new LeaderboardEntryViewModel
-            {
-                Name = u.Name,
-                Program = u.StudyProgram,
-                Points = u.Points,
-                QuizzesCompleted = u.QuizzesCompleted
-            })
-            .ToListAsync();
-
-        for (var i = 0; i < ranked.Count; i++)
+        var searchTerm = search?.Trim() ?? string.Empty;
+        if (!string.IsNullOrEmpty(searchTerm))
         {
-            ranked[i].Rank = i + 1;
+            query = query.Where(u => EF.Functions.Like(u.Name, $"%{searchTerm}%"));
         }
 
-        model.Entries = ranked
-            .Where(s => s.Name.Contains(model.Search, StringComparison.OrdinalIgnoreCase))
-            .ToList();
+        var users = await query
+            .OrderByDescending(u => u.Points)
+            .ThenBy(u => u.Name)
+            .ToListAsync();
+
+        var model = new LeaderboardViewModel
+        {
+            Search = searchTerm,
+            Entries = users.Select((u, index) => new LeaderboardEntryViewModel
+            {
+                Rank = index + 1,
+                Name = u.Name,
+                Points = u.Points,
+                QuizzesCompleted = u.QuizzesCompleted
+            }).ToList()
+        };
 
         return View(model);
     }
-}
+} 

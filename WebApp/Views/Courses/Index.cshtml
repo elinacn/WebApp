@@ -6,7 +6,14 @@
 <div class="container py-4 text-light" data-bs-theme="dark">
     <h1>Courses</h1>
 
-    <p><a asp-action="Create" class="btn btn-primary">New course</a></p>
+    @if (User.IsInRole(WebApp.Models.AppRoles.Admin))
+    {
+        <p><a asp-action="Create" class="btn btn-primary">New course</a></p>
+    }
+    else if (User.Identity?.IsAuthenticated != true)
+    {
+        <p><a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Url.Action("Create", "Courses")" class="btn btn-primary">Admin sign-in</a></p>
+    }
 
     @if (!Model.Any())
     {
@@ -31,9 +38,12 @@
                         <td>@item.Title</td>
                         <td>@item.Quests.Count</td>
                         <td>
-                            <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                            <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                            <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                            <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                            @if (User.IsInRole(WebApp.Models.AppRoles.Admin))
+                            {
+                                <span> | </span><a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                                <span> | </span><a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                            }
                         </td>
                     </tr>
                 }

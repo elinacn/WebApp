@@ -18,37 +18,20 @@
             <label for="leaderboard-search">Student name</label>
             <input id="leaderboard-search" name="search" value="@Model.Search" placeholder="Search students" maxlength="100" />
         </div>
-        <div>
-            <label for="leaderboard-program">Program</label>
-            <select id="leaderboard-program" name="program">
-                <option value="">All programs</option>
-                @foreach (var program in Model.Programs)
-                {
-                    <option value="@program" selected="@(program == Model.Program)">@program</option>
-                }
-            </select>
-        </div>
         <button type="submit">Apply filters</button>
         <a class="leaderboard-reset" asp-action="Leaderboard">Clear</a>
     </form>
 
     <section class="leaderboard-results">
         <div class="leaderboard-results-heading">
-            <h2>@(string.IsNullOrEmpty(Model.Program) ? "Overall rankings" : Model.Program)</h2>
+            <h2>Overall rankings</h2>
             <span>@Model.Entries.Count student(s)</span>
         </div>
-        @if (Model.Programs.Count == 0)
-        {
-            <div class="leaderboard-empty">
-                <h3>No students yet</h3>
-                <p>Students appear here once they are added under <a asp-controller="Users" asp-action="Index">Users</a>.</p>
-            </div>
-        }
-        else if (Model.Entries.Count == 0)
+        @if (Model.Entries.Count == 0)
         {
             <div class="leaderboard-empty">
                 <h3>No students found</h3>
-                <p>Try another name or select a different program.</p>
+                <p>Try another name or complete some quizzes.</p>
             </div>
         }
         else
@@ -57,7 +40,12 @@
                 <table class="leaderboard-table">
                     <caption>Students ranked by total points, highest first.</caption>
                     <thead>
-                        <tr><th scope="col">Rank</th><th scope="col">Student</th><th scope="col">Program</th><th scope="col">Quizzes completed</th><th scope="col">Points</th></tr>
+                        <tr>
+                            <th scope="col">Rank</th>
+                            <th scope="col">Student</th>
+                            <th scope="col">Quizzes completed</th>
+                            <th scope="col">Points</th>
+                        </tr>
                     </thead>
                     <tbody>
                         @foreach (var student in Model.Entries)
@@ -65,7 +53,6 @@
                             <tr class="@(student.Rank <= 3 ? "leaderboard-top-rank" : "")">
                                 <td><span class="leaderboard-rank">@student.Rank</span></td>
                                 <th scope="row">@student.Name</th>
-                                <td>@student.Program</td>
                                 <td>@student.QuizzesCompleted</td>
                                 <td class="leaderboard-points">@student.Points.ToString("N0")</td>
                             </tr>

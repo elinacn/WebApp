@@ -3,7 +3,7 @@
     "id": "quiz1",
     "title": "The first step - Strings",
     "description": "As your quest to become a master begins, the path ahead awaits. This is your first step towards mastering Strings..",
-    "difficulty": "apprentice",
+    "difficulty": "beginner",
     "questions": [
         {
             "id": "q1",

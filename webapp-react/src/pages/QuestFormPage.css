@@ -1,0 +1,65 @@
+.quest-form-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.quest-form-page > .form {
+  gap: 24px;
+}
+
+.question-editor .card-header .btn-ghost {
+  padding: 4px 8px;
+}
+
+.option-editor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.option-editor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.option-editor .option-key {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--slate);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.option-editor.correct .option-key {
+  background: var(--green);
+}
+
+.option-editor.correct .input {
+  border-color: rgba(34, 197, 94, 0.6);
+}
+
+.code-input {
+  font-family: 'Cascadia Code', Consolas, monospace;
+}
+
+.form-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: rgba(1, 15, 44, 0.95);
+  border: 1px solid var(--slate);
+  border-radius: var(--radius);
+  backdrop-filter: blur(6px);
+}

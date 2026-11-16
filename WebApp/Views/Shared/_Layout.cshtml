@@ -18,7 +18,10 @@
                     <li><a class="nav-item-link" asp-controller="Home" asp-action="Index">Home</a></li>
                     <li><a class="nav-item-link" asp-controller="Quests" asp-action="Quests">Quests</a></li>
                     <li><a class="nav-item-link" asp-controller="Leaderboard" asp-action="Leaderboard">Leaderboard</a></li>
-                    <li><a class="nav-item-link" asp-controller="Users" asp-action="Index">Users</a></li>
+                    @if (User.IsInRole(WebApp.Models.AppRoles.Admin))
+                    {
+                        <li><a class="nav-item-link" asp-controller="Users" asp-action="Index">Users</a></li>
+                    }
                     <li><a class="nav-item-link" asp-controller="Courses" asp-action="Index">Courses</a></li>
                 </ul>
             </nav>
@@ -49,7 +52,9 @@
                 {
                     <a class="navbar-login-btn" asp-controller="Account" asp-action="Login">Sign in</a>
                 }
-                <a class="navbar-logo" asp-controller="Home" asp-action="Index">Logo</a>
+                <a class="navbar-logo" asp-controller="Home" asp-action="Index">
+                    <img class="navbar-logo-image" src="~/images/quest-logo.svg" asp-append-version="true" alt="Home" width="48" height="48" />
+                </a>
             </div>
         </div>
     </header>

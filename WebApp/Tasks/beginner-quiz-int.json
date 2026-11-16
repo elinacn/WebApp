@@ -3,7 +3,7 @@
     "id": "quiz2",
     "title": "The first step - ints",
     "description": "As your quest to become a master begins, the path ahead awaits. This is your first step toward mastering ints..",
-    "difficulty": "apprentice",
+    "difficulty": "beginner",
     "questions": [
         {
             "id": "q1",

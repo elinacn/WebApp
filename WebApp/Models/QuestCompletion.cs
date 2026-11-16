@@ -1,8 +1,8 @@
 namespace WebApp.Models;
 
-// One row per user per quest they have completed. Records the best score, so
-// retaking a quest only earns the difference when the user beats it
-// (see QuestScoringService). Dates are stored in UTC.
+// One row per user per completed quest. Stores the best answer score and retake
+// history summary. Completion XP is awarded once by QuestScoringService.
+// Dates are stored in UTC.
 public class QuestCompletion
 {
     public int Id { get; set; }

@@ -6,11 +6,9 @@ namespace WebApp.Services;
 // The outcome of one completed attempt, shown on the Play page after submitting
 public record QuestResult(int Score, int MaxScore, int PointsAwarded, int BestScore, bool FirstCompletion, int TotalPoints);
 
-// Awards code points for completed quests. The best score counts: a retake only
-// earns the amount by which it beats the user's previous best on that quest, so
-// practising never costs points and repeating an easy quest can't farm them.
-// User.Points and User.QuizzesCompleted are updated in the same save, so the
-// leaderboard and the Users pages stay in step with the completions.
+// Awards difficulty-based XP once per user and quest. Retakes still update the
+// best answer score, attempt count and recent activity, without awarding more XP.
+// User.Points is the shared XP total used by the profile, home page and leaderboard.
 public class QuestScoringService
 {
     private readonly SheetsDbContext _context;
@@ -27,6 +25,10 @@ public class QuestScoringService
         var user = await _context.Users.FindAsync(userId)
             ?? throw new InvalidOperationException($"User {userId} does not exist.");
 
+        var quest = await _context.Quests.FindAsync(questId)
+            ?? throw new InvalidOperationException($"Quest {questId} does not exist.");
+        var completionXp = DifficultyRules.GetCompletionXp(quest.Difficulty);
+
         var completion = await _context.QuestCompletions
             .FirstOrDefaultAsync(c => c.UserId == userId && c.QuestId == questId);
         var now = DateTime.UtcNow;
@@ -39,7 +41,7 @@ public class QuestScoringService
             user.QuizzesCompleted++;
         }
 
-        var pointsAwarded = Math.Max(0, score - completion.BestScore);
+        var pointsAwarded = firstCompletion ? completionXp : 0;
         completion.BestScore = Math.Max(completion.BestScore, score);
         completion.MaxScore = maxScore;
         completion.Attempts++;
@@ -49,7 +51,7 @@ public class QuestScoringService
         await _context.SaveChangesAsync();
 
         _logger.LogInformation(
-            "User {UserId} completed quest {QuestId}: {Score}/{MaxScore}, +{PointsAwarded} code points (best {BestScore}, attempt {Attempt})",
+            "User {UserId} completed quest {QuestId}: {Score}/{MaxScore}, +{PointsAwarded} XP (best {BestScore}, attempt {Attempt})",
             userId, questId, score, maxScore, pointsAwarded, completion.BestScore, completion.Attempts);
 
         return new QuestResult(score, maxScore, pointsAwarded, completion.BestScore, firstCompletion, user.Points);

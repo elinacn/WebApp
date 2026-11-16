@@ -34,3 +34,8 @@
         </p>
     }
 </div>
+
+@if (ViewData["CanSetupAdmin"] is true)
+{
+    <div class="container pb-4"><a asp-action="SetupAdmin">Set up the first admin account</a></div>
+}

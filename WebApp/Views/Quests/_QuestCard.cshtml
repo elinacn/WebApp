@@ -18,7 +18,7 @@
     {
         <p class="quest-card-code">@Model.CourseCode</p>
     }
-    <p class="quest-card-meta">@(string.IsNullOrEmpty(Model.DifficultyLabel) ? Model.Difficulty.ToString() : Model.DifficultyLabel) · @Model.Points pts</p>
+    <p class="quest-card-meta">@(string.IsNullOrEmpty(Model.DifficultyLabel) ? Model.Difficulty.ToString() : Model.DifficultyLabel) · @Model.XpReward XP</p>
     @if (Model.Status != QuestStatus.NotStarted)
     {
         <p class="quest-card-status">@Model.Status</p>
