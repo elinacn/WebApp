@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
 import PlayQuestPage from './pages/PlayQuestPage'
+import QuestFormPage from './pages/QuestFormPage'
 import QuestsPage from './pages/QuestsPage'
 
 export default function App() {
@@ -19,6 +20,22 @@ export default function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/quests" element={<QuestsPage />} />
+              <Route
+                path="/quests/new"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <QuestFormPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/quests/:id/edit"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <QuestFormPage />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/quests/:id/play"
                 element={
