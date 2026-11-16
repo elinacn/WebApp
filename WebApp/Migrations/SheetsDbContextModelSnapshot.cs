@@ -225,6 +225,24 @@ namespace WebApp.Migrations
                     b.ToTable("QuestQuestions");
                 });
 
+            modelBuilder.Entity("WebApp.Models.SavedQuest", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("QuestId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("SavedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("UserId", "QuestId");
+
+                    b.HasIndex("QuestId");
+
+                    b.ToTable("SavedQuests");
+                });
+
             modelBuilder.Entity("WebApp.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -322,6 +340,21 @@ namespace WebApp.Migrations
                     b.HasOne("WebApp.Models.Quest", null)
                         .WithMany("Questions")
                         .HasForeignKey("QuestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WebApp.Models.SavedQuest", b =>
+                {
+                    b.HasOne("WebApp.Models.Quest", null)
+                        .WithMany()
+                        .HasForeignKey("QuestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebApp.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

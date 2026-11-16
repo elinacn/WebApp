@@ -40,7 +40,7 @@ public class QuestsController : Controller
         }
 
         // The library stays public; creating content requires a signed-in user.
-        if (section == "create" && User.Identity?.IsAuthenticated != true)
+        if ((section == "create" || section == "saved") && User.Identity?.IsAuthenticated != true)
         {
             return Challenge();
         }
@@ -64,7 +64,7 @@ public class QuestsController : Controller
             FeaturedQuests = LoadFeaturedQuests(filter),
             RecommendedQuests = LoadRecommendedQuests(filter),
             ExploreQuests = section == "explore" ? await LoadExploreQuestsAsync(filter) : [],
-            SavedQuests = LoadSavedQuests(filter)
+            SavedQuests = section == "saved" ? await LoadExploreQuestsAsync(filter, savedOnly: true) : []
         };
 
         if (section == "create" || section == "library")
@@ -79,12 +79,35 @@ public class QuestsController : Controller
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult ToggleSave(int questId)
+    public async Task<IActionResult> ToggleSave(int questId, string section = "explore",
+        string? searchText = null, Difficulty? difficulty = null)
     {
-        _logger.LogInformation("User {UserId} toggled the saved state for quest {QuestId}.", User.GetUserId(), questId);
+        if (User.GetUserId() is not int userId) return Challenge();
+        if (!await _context.Quests.AnyAsync(q => q.Id == questId)) return NotFound();
 
-        // DATABASE HOOK: connect the database here, for saving quests type shi
-        return RedirectToAction(nameof(Quests));
+        var bookmark = await _context.SavedQuests.FindAsync(userId, questId);
+        if (bookmark is null)
+            _context.SavedQuests.Add(new SavedQuest { UserId = userId, QuestId = questId });
+        else
+            _context.SavedQuests.Remove(bookmark);
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("User {UserId} changed bookmark for quest {QuestId}: saved={Saved}",
+                userId, questId, bookmark is null);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Failed to change bookmark for user {UserId}, quest {QuestId}", userId, questId);
+            TempData["Error"] = "Could not update your saved quests. Please try again.";
+        }
+
+        // Only return to known quest sections, preserving the current filters.
+        return RedirectToAction(nameof(Quests), new
+        {
+            section = section == "saved" ? "saved" : "explore", searchText, difficulty
+        });
     }
 
     // Play: signing in is required, so the points earned can be recorded for the user
@@ -590,9 +613,12 @@ public class QuestsController : Controller
             .ToList()
     };
 
-        private async Task<List<QuestCardViewModel>> LoadExploreQuestsAsync(QuestFilterViewModel filter)
+    private async Task<List<QuestCardViewModel>> LoadExploreQuestsAsync(QuestFilterViewModel filter, bool savedOnly = false)
     {
+        var userId = User.GetUserId();
         var query = _context.Quests.AsNoTracking();
+        if (savedOnly)
+            query = query.Where(q => _context.SavedQuests.Any(s => s.UserId == userId && s.QuestId == q.Id));
 
         if (!string.IsNullOrWhiteSpace(filter.SearchText))
         {
@@ -614,12 +640,13 @@ public class QuestsController : Controller
                 Title = q.Title,
                 DifficultyLabel = q.Difficulty,
                 Points = q.Questions.Sum(x => (int?)x.Points) ?? 0,
-                Status = QuestStatus.NotStarted
+                Status = QuestStatus.NotStarted,
+                IsSaved = _context.SavedQuests.Any(s => s.UserId == userId && s.QuestId == q.Id)
             })
             .ToListAsync();
 
         // Mark the quests the signed-in user has completed, with their best score as the progress
-        if (User.GetUserId() is int userId)
+        if (userId.HasValue)
         {
             var bestScores = await _context.QuestCompletions.AsNoTracking()
                 .Where(c => c.UserId == userId)
@@ -662,9 +689,4 @@ public class QuestsController : Controller
         return [];
     }
 
-    private List<QuestCardViewModel> LoadSavedQuests(QuestFilterViewModel filter)
-    {
-        // DATABASE HOOK: connect the database here. 
-        return [];
-    }
 }
