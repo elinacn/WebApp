@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
+using WebApp.DAL;
 using Microsoft.AspNetCore.Authorization;
 using WebApp.Extensions;
 
@@ -9,13 +10,13 @@ namespace WebApp.Controllers;
 
 public class UsersController : Controller
 {
-    private readonly SheetsDbContext _context;
+    private readonly IUserRepository _users;
     private readonly IPasswordHasher<Models.User> _passwordHasher;
     private readonly ILogger<UsersController> _logger;
 
-    public UsersController(SheetsDbContext context, IPasswordHasher<Models.User> passwordHasher, ILogger<UsersController> logger)
+    public UsersController(IUserRepository users, IPasswordHasher<Models.User> passwordHasher, ILogger<UsersController> logger)
     {
-        _context = context;
+        _users = users;
         _passwordHasher = passwordHasher;
         _logger = logger;
     }
@@ -24,10 +25,7 @@ public class UsersController : Controller
     [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Index()
     {
-        var users = await _context.Users.AsNoTracking()
-            .OrderByDescending(u => u.Points)
-            .ThenBy(u => u.Username)
-            .ToListAsync();
+        var users = await _users.GetAllAsync();
         return View(users);
     }
 
@@ -37,7 +35,7 @@ public class UsersController : Controller
     {
         if (id is null) return BadRequest();
 
-        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+        var user = await _users.GetByIdAsync(id.Value);
         if (user is null)
         {
             _logger.LogWarning("User {UserId} not found", id);
@@ -58,7 +56,7 @@ public class UsersController : Controller
     public async Task<IActionResult> Create([Bind("Username,Name,StudyProgram,CreatedAt,IsAdmin")] User user, string? password)
     {
         // Custom server-side rules on top of the data annotations
-        if (await _context.Users.AnyAsync(u => u.Username == user.Username))
+        if (await _users.UsernameExistsAsync(user.Username))
             ModelState.AddModelError(nameof(Models.User.Username), "This username is already taken.");
 
         if (PasswordRules.Validate(password) is string passwordError)
@@ -69,8 +67,7 @@ public class UsersController : Controller
         try
         {
             user.PasswordHash = _passwordHasher.HashPassword(user, password!);
-            _context.Add(user);
-            await _context.SaveChangesAsync();
+            await _users.AddAsync(user);
             _logger.LogInformation("Created user {UserId} ({Username})", user.Id, user.Username);
             TempData["Success"] = "User created.";
             return RedirectToAction(nameof(Index));
@@ -97,7 +94,7 @@ public class UsersController : Controller
             return Forbid();
         }
 
-        var user = await _context.Users.FindAsync(id.Value);
+        var user = await _users.GetByIdAsync(id.Value);
 
         return user is null ? NotFound() : View(user);
     }
@@ -114,17 +111,17 @@ public class UsersController : Controller
         }
         if (id != user.Id) return BadRequest();
 
-        if (await _context.Users.AnyAsync(u => u.Username == user.Username && u.Id != id))
+        if (await _users.UsernameExistsAsync(user.Username, id))
             ModelState.AddModelError(nameof(Models.User.Username), "This username is already taken.");
 
         if (!string.IsNullOrEmpty(newPassword) && PasswordRules.Validate(newPassword) is string passwordError)
             ModelState.AddModelError(nameof(newPassword), passwordError);
 
-        var existing = await _context.Users.FindAsync(id);
+        var existing = await _users.GetByIdAsync(id);
         if (existing is null) return NotFound();
 
         if (User.IsInRole(AppRoles.Admin) && existing.IsAdmin && !user.IsAdmin
-            && await _context.Users.CountAsync(u => u.IsAdmin) <= 1)
+            && await _users.CountAdminsAsync() <= 1)
         {
             ModelState.AddModelError(nameof(Models.User.IsAdmin), "Keep at least one admin account.");
         }
@@ -158,7 +155,7 @@ public class UsersController : Controller
 
         try
         {
-            await _context.SaveChangesAsync();
+            await _users.UpdateAsync(existing);
             _logger.LogInformation("Updated user {UserId}{PasswordChanged}", id, string.IsNullOrEmpty(newPassword) ? "" : " (password changed)");
             TempData["Success"] = "User updated.";
             return User.IsInRole(AppRoles.Admin)
@@ -167,7 +164,7 @@ public class UsersController : Controller
         }
         catch (DbUpdateConcurrencyException ex)
         {
-            if (!await _context.Users.AnyAsync(u => u.Id == id)) return NotFound();
+            if (!await _users.ExistsAsync(id)) return NotFound();
             _logger.LogError(ex, "Concurrency conflict updating user {UserId}", id);
             ModelState.AddModelError(string.Empty, "This user was changed elsewhere. Reload and try again.");
         }
@@ -185,7 +182,7 @@ public class UsersController : Controller
     {
         if (id is null) return BadRequest();
 
-        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+        var user = await _users.GetByIdAsync(id.Value);
         return user is null ? NotFound() : View(user);
     }
 
@@ -194,9 +191,9 @@ public class UsersController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _users.GetByIdAsync(id);
         if (user is null) return RedirectToAction(nameof(Index));
-        if (user.IsAdmin && await _context.Users.CountAsync(u => u.IsAdmin) <= 1)
+        if (user.IsAdmin && await _users.CountAdminsAsync() <= 1)
         {
             TempData["Error"] = "You cannot delete the last admin account.";
             return RedirectToAction(nameof(Index));
@@ -204,8 +201,7 @@ public class UsersController : Controller
 
         try
         {
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            await _users.DeleteAsync(user);
             _logger.LogInformation("Deleted user {UserId}", id);
             TempData["Success"] = "User deleted.";
         }
