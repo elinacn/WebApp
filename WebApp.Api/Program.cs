@@ -11,11 +11,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
-// Create/upgrade the database on startup
+// Create/upgrade the database on startup and fill it with demo data the first time
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+    DbSeeder.Seed(db, Path.Combine(AppContext.BaseDirectory, "Data", "SeedData"), app.Logger);
 }
 
 if (app.Environment.IsDevelopment())
