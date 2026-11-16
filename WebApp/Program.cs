@@ -17,6 +17,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<WebApp.DAL.ICourseRepository, WebApp.DAL.CourseRepository>();
 builder.Services.AddScoped<WebApp.DAL.IQuestRepository, WebApp.DAL.QuestRepository>();
 builder.Services.AddScoped<WebApp.DAL.IUserRepository, WebApp.DAL.UserRepository>();
+builder.Services.AddScoped<WebApp.DAL.IProgressRepository, WebApp.DAL.ProgressRepository>();
 builder.Services.AddScoped<WebApp.Services.DailyStreakService>();
 builder.Services.AddScoped<WebApp.Services.QuestScoringService>();
 builder.Services.AddDbContext<WebApp.Models.SheetsDbContext>(options =>

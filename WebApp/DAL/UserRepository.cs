@@ -16,6 +16,16 @@ public class UserRepository : IUserRepository
         _context.Users.AsNoTracking()
             .OrderByDescending(u => u.Points).ThenBy(u => u.Username).ToListAsync();
 
+    public async Task<List<User>> GetLeaderboardAsync(string? search = null, int? limit = null)
+    {
+        var query = _context.Users.AsNoTracking();
+        if (!string.IsNullOrEmpty(search))
+            query = query.Where(u => EF.Functions.Like(u.Name, $"%{search}%"));
+        query = query.OrderByDescending(u => u.Points).ThenBy(u => u.Name);
+        if (limit.HasValue) query = query.Take(limit.Value);
+        return await query.ToListAsync();
+    }
+
     public async Task<User?> GetByIdAsync(int id) => await _context.Users.FindAsync(id);
 
     public Task<User?> GetByUsernameAsync(string username)

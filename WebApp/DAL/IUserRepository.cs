@@ -5,6 +5,7 @@ namespace WebApp.DAL;
 public interface IUserRepository
 {
     Task<List<User>> GetAllAsync();
+    Task<List<User>> GetLeaderboardAsync(string? search = null, int? limit = null);
     Task<User?> GetByIdAsync(int id);
     Task<User?> GetByUsernameAsync(string username);
     Task<bool> ExistsAsync(int id);

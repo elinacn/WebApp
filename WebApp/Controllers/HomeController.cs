@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using WebApp.Extensions;
+using WebApp.DAL;
 using WebApp.Models;
 using WebApp.Services;
 using WebApp.ViewModels;
@@ -10,12 +10,12 @@ namespace WebApp.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly SheetsDbContext _context;
+    private readonly IUserRepository _users;
     private readonly DailyStreakService _streakService;
 
-    public HomeController(SheetsDbContext context, DailyStreakService streakService)
+    public HomeController(IUserRepository users, DailyStreakService streakService)
     {
-        _context = context;
+        _users = users;
         _streakService = streakService;
     }
 
@@ -23,7 +23,7 @@ public class HomeController : Controller
     {
         // The signed-in user's code points from completed quests (0 for visitors)
         var userId = User.GetUserId();
-        var user = userId is null ? null : await _context.Users.FindAsync(userId);
+        var user = userId is null ? null : await _users.GetByIdAsync(userId.Value);
         ViewData["CodePoints"] = user?.Points ?? 0;
 
         int streak = 0;
@@ -39,12 +39,7 @@ public class HomeController : Controller
         ViewData["WeekActivity"] = weekActivity;
 
         // fetches top 3 user for mini leaderboard
-        var dbUsers = await _context.Users
-            .AsNoTracking()
-            .OrderByDescending(u => u.Points)
-            .ThenBy(u => u.Name)
-            .Take(3)
-            .ToListAsync();
+        var dbUsers = await _users.GetLeaderboardAsync(limit: 3);
 
         // 2. Map them and assign ranks in memory
         var topUsers = dbUsers.Select((u, index) => new LeaderboardEntryViewModel
