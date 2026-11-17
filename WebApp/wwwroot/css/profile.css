@@ -216,7 +216,9 @@
     font-size: 11px;
     text-align: center;
 }
-@media (max-width: 650px) {
+
+/* Small (see site.css): compacts header, stats and padding. */
+@media (max-width: 640px) {
     .profile-container {
         margin: 0 auto;
         padding: 0 20px 24px;

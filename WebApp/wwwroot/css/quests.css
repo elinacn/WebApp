@@ -371,6 +371,7 @@
   background-color: #6366F1;
 }
 
+/* Small (see site.css): stacks sidebar above main content. */
 @media (max-width: 640px) {
   .quests-page {
     flex-direction: column;

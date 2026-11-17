@@ -43,7 +43,9 @@
 .leaderboard-empty h3 { font-size: 20px; }
 .leaderboard-empty p, .leaderboard-note { color: #b8c2d2; }
 .leaderboard-note { font-size: 12px; margin-top: 18px; }
-@media (max-width: 650px) {
+
+/* Small (see site.css): compacts heading, filters and table. */
+@media (max-width: 640px) {
     .leaderboard-container { margin-top: 28px; padding: 0 16px; }
     .leaderboard-heading { align-items: start; flex-direction: column; gap: 14px; }
     .leaderboard-heading h1 { font-size: 29px; }
