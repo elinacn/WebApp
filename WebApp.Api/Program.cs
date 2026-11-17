@@ -27,6 +27,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IQuestRepository, QuestRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IProgressRepository, ProgressRepository>();
 builder.Services.AddSingleton<QuestGradingService>();
 builder.Services.AddScoped<QuestScoringService>();
 builder.Services.AddScoped<StreakService>();

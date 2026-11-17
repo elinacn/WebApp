@@ -29,6 +29,10 @@ public class UserRepository : IUserRepository
     public Task<List<string>> GetProgramsAsync() =>
         _context.Users.Select(u => u.StudyProgram).Distinct().OrderBy(p => p).ToListAsync();
 
+    public Task<List<User>> GetLeaderboardAsync() =>
+        _context.Users.AsNoTracking().Where(u => u.Role == Roles.Student)
+            .OrderByDescending(u => u.Points).ThenBy(u => u.Name).ToListAsync();
+
     public async Task<User?> GetByIdAsync(int id) => await _context.Users.FindAsync(id);
 
     public Task<User?> GetByUsernameAsync(string username)

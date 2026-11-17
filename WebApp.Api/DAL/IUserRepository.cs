@@ -6,6 +6,7 @@ public interface IUserRepository
 {
     Task<List<User>> SearchAsync(string? search, string? program, string? role);
     Task<List<string>> GetProgramsAsync();
+    Task<List<User>> GetLeaderboardAsync();
     Task<User?> GetByIdAsync(int id);
     Task<User?> GetByUsernameAsync(string username);
     Task<bool> ExistsAsync(int id);

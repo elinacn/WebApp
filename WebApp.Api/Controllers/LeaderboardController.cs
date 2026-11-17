@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApp.Api.Data;
+using WebApp.Api.DAL;
 using WebApp.Api.Dtos;
-using WebApp.Api.Models;
 
 namespace WebApp.Api.Controllers;
 
@@ -10,11 +8,11 @@ namespace WebApp.Api.Controllers;
 [Route("api/leaderboard")]
 public class LeaderboardController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly IUserRepository _users;
 
-    public LeaderboardController(AppDbContext db)
+    public LeaderboardController(IUserRepository users)
     {
-        _db = db;
+        _users = users;
     }
 
     // GET /api/leaderboard?search=an&program=Web programming&top=3
@@ -22,11 +20,7 @@ public class LeaderboardController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<LeaderboardEntryDto>>> Get(string? search, string? program, int? top)
     {
-        var students = await _db.Users.AsNoTracking()
-            .Where(u => u.Role == Roles.Student)
-            .OrderByDescending(u => u.Points)
-            .ThenBy(u => u.Name)
-            .ToListAsync();
+        var students = await _users.GetLeaderboardAsync();
 
         IEnumerable<LeaderboardEntryDto> ranked = students.Select((u, index) =>
             new LeaderboardEntryDto(index + 1, u.Id, u.Name, u.StudyProgram, u.Points, u.QuizzesCompleted));
