@@ -5,6 +5,7 @@
   align-items: start;
 }
 
+/* Below Large: home grid becomes one column. */
 @media (max-width: 1100px) {
   .home-grid {
     grid-template-columns: 1fr;

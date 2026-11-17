@@ -181,6 +181,7 @@
   margin-bottom: 28px;
 }
 
+/* Small: result summary stacks and centers. */
 @media (max-width: 640px) {
   .result-summary {
     flex-direction: column;

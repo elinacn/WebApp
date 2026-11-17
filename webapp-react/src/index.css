@@ -3,6 +3,18 @@
    pattern background, indigo navbar and accents.
    ========================================================================== */
 
+/* ==========================================================================
+   BREAKPOINTS
+
+   Small   max-width: 640px     Phones: single column, tighter padding.
+   Medium  min-width: 768px     Tablets and up: base font 14px -> 16px.
+           max-width: 767.98px  Below Medium: compact navbar/home layout.
+                                (767.98 not 767, so there is no gap at
+                                fractional widths when zoomed or high-DPI.)
+   Large   max-width: 1100px    Below desktop: home grid becomes one column.
+   ========================================================================== 
+*/
+
 :root {
   --navy: #010f2c;
   --navy-soft: #0b1a3d;
@@ -235,7 +247,8 @@ pre {
   color: #fca5a5;
 }
 
-@media (max-width: 860px) {
+/* Below Medium: navbar collapses behind the toggle button. */
+@media (max-width: 767.98px) {
   .navbar-toggle {
     display: block;
   }
@@ -727,7 +740,8 @@ pre {
   margin-bottom: 24px;
 }
 
-@media (max-width: 1000px) {
+/* Below Large: filters switch to 2 columns. */
+@media (max-width: 1100px) {
   .filters {
     grid-template-columns: 1fr 1fr;
   }
