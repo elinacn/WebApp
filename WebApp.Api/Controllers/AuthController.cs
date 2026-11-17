@@ -4,8 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApp.Api.Data;
+using WebApp.Api.DAL;
 using WebApp.Api.Dtos;
 using WebApp.Api.Extensions;
 using WebApp.Api.Models;
@@ -17,13 +16,13 @@ namespace WebApp.Api.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly IUserRepository _users;
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(AppDbContext db, IPasswordHasher<User> passwordHasher, ILogger<AuthController> logger)
+    public AuthController(IUserRepository users, IPasswordHasher<User> passwordHasher, ILogger<AuthController> logger)
     {
-        _db = db;
+        _users = users;
         _passwordHasher = passwordHasher;
         _logger = logger;
     }
@@ -35,7 +34,7 @@ public class AuthController : ControllerBase
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
         var name = login.Username.Trim().ToLower();
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == name);
+        var user = await _users.GetByUsernameAsync(name);
 
         // Same message whether the username or the password is wrong, so the
         // response doesn't reveal which usernames exist
@@ -52,7 +51,7 @@ public class AuthController : ControllerBase
         if (result == PasswordVerificationResult.SuccessRehashNeeded)
         {
             user.PasswordHash = _passwordHasher.HashPassword(user, login.Password);
-            await _db.SaveChangesAsync();
+            await _users.UpdateAsync(user);
         }
 
         var claims = new List<Claim>
@@ -82,7 +81,7 @@ public class AuthController : ControllerBase
     [HttpGet("me")]
     public async Task<ActionResult<UserDto>> Me()
     {
-        var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == User.GetUserId());
+        var user = await _users.GetByIdAsync(User.GetUserId()!.Value);
         return user is null ? Unauthorized() : user.ToDto();
     }
 }

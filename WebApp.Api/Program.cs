@@ -26,6 +26,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IQuestRepository, QuestRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddSingleton<QuestGradingService>();
 builder.Services.AddScoped<QuestScoringService>();
 builder.Services.AddScoped<StreakService>();
@@ -59,8 +60,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Events.OnValidatePrincipal = async context =>
         {
             var userId = context.Principal?.GetUserId();
-            var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
-            if (userId is null || !await db.Users.AnyAsync(u => u.Id == userId))
+            var users = context.HttpContext.RequestServices.GetRequiredService<IUserRepository>();
+            if (userId is null || !await users.ExistsAsync(userId.Value))
             {
                 context.RejectPrincipal();
                 await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
