@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using WebApp.Models;
+using WebApp.DAL;
 using WebApp.Services;
 
 namespace WebApp.Tests;
@@ -22,7 +23,7 @@ public class DifficultyXpTests
         var quest = new Quest { Title = "Reward test", Difficulty = difficulty };
         db.AddRange(user, quest);
         await db.SaveChangesAsync();
-        var service = new QuestScoringService(db, NullLogger<QuestScoringService>.Instance);
+        var service = new QuestScoringService(new UserRepository(db), new QuestRepository(db), new ProgressRepository(db), NullLogger<QuestScoringService>.Instance);
 
         var first = await service.RecordCompletionAsync(user.Id, quest.Id, 0, 10);
         Assert.Equal(reward, first.PointsAwarded);

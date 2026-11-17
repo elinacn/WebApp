@@ -1,35 +1,24 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApp.Models;
+using WebApp.DAL;
 using WebApp.ViewModels;
 
 namespace WebApp.Controllers;
 
 public class LeaderboardController : Controller
 {
-    private readonly SheetsDbContext _context;
+    private readonly IUserRepository _users;
 
-    public LeaderboardController(SheetsDbContext context)
+    public LeaderboardController(IUserRepository users)
     {
-        _context = context;
+        _users = users;
     }
 
     public IActionResult Index() => RedirectToAction(nameof(Leaderboard));
 
     public async Task<IActionResult> Leaderboard(string? search)
     {
-        var query = _context.Users.AsNoTracking();
-
         var searchTerm = search?.Trim() ?? string.Empty;
-        if (!string.IsNullOrEmpty(searchTerm))
-        {
-            query = query.Where(u => EF.Functions.Like(u.Name, $"%{searchTerm}%"));
-        }
-
-        var users = await query
-            .OrderByDescending(u => u.Points)
-            .ThenBy(u => u.Name)
-            .ToListAsync();
+        var users = await _users.GetLeaderboardAsync(searchTerm);
 
         var model = new LeaderboardViewModel
         {

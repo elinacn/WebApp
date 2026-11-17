@@ -39,7 +39,7 @@ public class SignInTests : IClassFixture<TestWebAppFactory>
         }));
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Equal("/Quests/Quests", response.Headers.Location?.OriginalString);
+        Assert.Equal("/Quests/Quests?section=explore", response.Headers.Location?.OriginalString);
     }
 
     [Fact]

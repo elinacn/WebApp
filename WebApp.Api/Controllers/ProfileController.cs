@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApp.Api.Data;
+using WebApp.Api.DAL;
 using WebApp.Api.Dtos;
 using WebApp.Api.Extensions;
 using WebApp.Api.Services;
@@ -14,12 +13,14 @@ namespace WebApp.Api.Controllers;
 [Authorize]
 public class ProfileController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly IUserRepository _users;
+    private readonly IProgressRepository _progress;
     private readonly StreakService _streaks;
 
-    public ProfileController(AppDbContext db, StreakService streaks)
+    public ProfileController(IUserRepository users, IProgressRepository progress, StreakService streaks)
     {
-        _db = db;
+        _users = users;
+        _progress = progress;
         _streaks = streaks;
     }
 
@@ -28,15 +29,12 @@ public class ProfileController : ControllerBase
     public async Task<ActionResult<ProfileDto>> Get()
     {
         var userId = User.GetUserId()!.Value;
-        var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+        var user = await _users.GetByIdAsync(userId);
         if (user is null) return Unauthorized();
 
-        var recent = await _db.QuestCompletions.AsNoTracking()
-            .Where(c => c.UserId == userId)
-            .OrderByDescending(c => c.LastCompletedAt)
-            .Take(10)
-            .Select(c => new ActivityDto(c.QuestId, c.Quest.Title, c.BestScore, c.MaxScore, c.Attempts, c.LastCompletedAt))
-            .ToListAsync();
+        var completions = await _progress.GetRecentAsync(userId, 10);
+        var recent = completions.Select(c => new ActivityDto(c.QuestId, c.Quest.Title,
+            c.BestScore, c.MaxScore, c.Attempts, c.LastCompletedAt)).ToList();
 
         return new ProfileDto(
             user.ToDto(),

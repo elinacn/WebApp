@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using WebApp.Extensions;
-using WebApp.Models;
+using WebApp.DAL;
 using WebApp.Services;
 using WebApp.ViewModels;
 
@@ -11,12 +10,14 @@ namespace WebApp.Controllers;
 [Authorize]
 public class ProfileController : Controller
 {
-    private readonly SheetsDbContext _context;
+    private readonly IUserRepository _users;
+    private readonly IProgressRepository _progress;
     private readonly DailyStreakService _streakService;
 
-    public ProfileController(SheetsDbContext context, DailyStreakService streakService)
+    public ProfileController(IUserRepository users, IProgressRepository progress, DailyStreakService streakService)
     {
-        _context = context;
+        _users = users;
+        _progress = progress;
         _streakService = streakService;
     }
 
@@ -25,9 +26,10 @@ public class ProfileController : Controller
         var userId = User.GetUserId();
         if (userId is null) return Challenge();
 
-        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId.Value);
+        var user = await _users.GetByIdAsync(userId.Value);
         if (user is null) return NotFound();
 
+        var recent = await _progress.GetRecentAsync(user.Id, 5);
         var model = new ProfileViewModel
         {
             Id = user.Id,
@@ -36,11 +38,7 @@ public class ProfileController : Controller
             TotalXp = user.Points,
             QuizzesCompleted = user.QuizzesCompleted,
             Streak = await _streakService.GetStreakAsync(user.Id.ToString()),
-            RecentActivity = await _context.QuestCompletions.AsNoTracking()
-                .Where(c => c.UserId == user.Id)
-                .OrderByDescending(c => c.LastCompletedAt)
-                .ThenByDescending(c => c.Id)
-                .Take(5)
+            RecentActivity = recent
                 .Select(c => new ProfileActivityViewModel
                 {
                     QuestTitle = c.Quest.Title,
@@ -49,7 +47,7 @@ public class ProfileController : Controller
                     Attempts = c.Attempts,
                     CompletedAtUtc = c.LastCompletedAt
                 })
-                .ToListAsync()
+                .ToList()
         };
 
         return View(model);

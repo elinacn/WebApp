@@ -13,6 +13,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllersWithViews();
+// Use one course repository per request, sharing the request's database context.
+builder.Services.AddScoped<WebApp.DAL.ICourseRepository, WebApp.DAL.CourseRepository>();
+builder.Services.AddScoped<WebApp.DAL.IQuestRepository, WebApp.DAL.QuestRepository>();
+builder.Services.AddScoped<WebApp.DAL.IUserRepository, WebApp.DAL.UserRepository>();
+builder.Services.AddScoped<WebApp.DAL.IProgressRepository, WebApp.DAL.ProgressRepository>();
 builder.Services.AddScoped<WebApp.Services.DailyStreakService>();
 builder.Services.AddScoped<WebApp.Services.QuestScoringService>();
 builder.Services.AddDbContext<WebApp.Models.SheetsDbContext>(options =>
@@ -36,8 +41,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Events.OnValidatePrincipal = async context =>
         {
             var userId = context.Principal?.GetUserId();
-            var db = context.HttpContext.RequestServices.GetRequiredService<SheetsDbContext>();
-            var user = userId is null ? null : await db.Users.FindAsync(userId);
+            var users = context.HttpContext.RequestServices.GetRequiredService<WebApp.DAL.IUserRepository>();
+            var user = userId is null ? null : await users.GetByIdAsync(userId.Value);
             if (user is null)
             {
                 context.RejectPrincipal();
@@ -63,7 +68,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             if (user.LastSeenAt is null || now - user.LastSeenAt > TimeSpan.FromMinutes(1))
             {
                 user.LastSeenAt = now;
-                await db.SaveChangesAsync();
+                await users.UpdateAsync(user);
             }
         };
 

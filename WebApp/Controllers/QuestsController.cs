@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Extensions;
 using WebApp.Models;
+using WebApp.DAL;
 using WebApp.ViewModels;
 using static WebApp.ViewModels.QuestFormMapper;
 using WebApp.Services;
@@ -13,18 +14,18 @@ namespace WebApp.Controllers;
 public class QuestsController : Controller
 {
     private readonly ILogger<QuestsController> _logger;
-    private readonly SheetsDbContext _context;
+    private readonly IQuestRepository _quests;
     private readonly DailyStreakService _streakService;
     private readonly QuestScoringService _scoringService;
 
     public QuestsController(
     ILogger<QuestsController> logger,
-    SheetsDbContext context,
+    IQuestRepository quests,
     DailyStreakService streakService,
     QuestScoringService scoringService)
     {
     _logger = logger;
-    _context = context;
+    _quests = quests;
     _streakService = streakService;
     _scoringService = scoringService;
     }
@@ -40,7 +41,7 @@ public class QuestsController : Controller
         }
 
         // The library stays public; creating content requires a signed-in user.
-        if (section == "create" && User.Identity?.IsAuthenticated != true)
+        if ((section == "create" || section == "saved") && User.Identity?.IsAuthenticated != true)
         {
             return Challenge();
         }
@@ -64,7 +65,7 @@ public class QuestsController : Controller
             FeaturedQuests = LoadFeaturedQuests(filter),
             RecommendedQuests = LoadRecommendedQuests(filter),
             ExploreQuests = section == "explore" ? await LoadExploreQuestsAsync(filter) : [],
-            SavedQuests = LoadSavedQuests(filter)
+            SavedQuests = section == "saved" ? await LoadExploreQuestsAsync(filter, savedOnly: true) : []
         };
 
         if (section == "create" || section == "library")
@@ -79,12 +80,29 @@ public class QuestsController : Controller
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult ToggleSave(int questId)
+    public async Task<IActionResult> ToggleSave(int questId, string section = "explore",
+        string? searchText = null, Difficulty? difficulty = null)
     {
-        _logger.LogInformation("User {UserId} toggled the saved state for quest {QuestId}.", User.GetUserId(), questId);
+        if (User.GetUserId() is not int userId) return Challenge();
+        if (!await _quests.ExistsAsync(questId)) return NotFound();
 
-        // DATABASE HOOK: connect the database here, for saving quests type shi
-        return RedirectToAction(nameof(Quests));
+        try
+        {
+            var saved = await _quests.ToggleSaveAsync(userId, questId);
+            _logger.LogInformation("User {UserId} changed bookmark for quest {QuestId}: saved={Saved}",
+                userId, questId, saved);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Failed to change bookmark for user {UserId}, quest {QuestId}", userId, questId);
+            TempData["Error"] = "Could not update your saved quests. Please try again.";
+        }
+
+        // Only return to known quest sections, preserving the current filters.
+        return RedirectToAction(nameof(Quests), new
+        {
+            section = section == "saved" ? "saved" : "explore", searchText, difficulty
+        });
     }
 
     // Play: signing in is required, so the points earned can be recorded for the user
@@ -93,10 +111,7 @@ public class QuestsController : Controller
     {
         if (id is null) return BadRequest();
 
-        var quest = await _context.Quests
-            .AsNoTracking()
-            .Include(q => q.Questions).ThenInclude(q => q.Options)
-            .FirstOrDefaultAsync(q => q.Id == id);
+        var quest = await _quests.GetWithQuestionsAsync(id.Value);
         if (quest is null) return NotFound();
 
         if (quest.Questions.Count == 0)
@@ -115,10 +130,7 @@ public class QuestsController : Controller
     {
         answers ??= [];
 
-        var quest = await _context.Quests
-            .AsNoTracking()
-            .Include(q => q.Questions).ThenInclude(q => q.Options)
-            .FirstOrDefaultAsync(q => q.Id == id);
+        var quest = await _quests.GetWithQuestionsAsync(id);
         if (quest is null) return NotFound();
 
         var model = ToPlayModel(quest);
@@ -241,7 +253,7 @@ public class QuestsController : Controller
         newQuest.Id = 0;
         ValidateQuest(newQuest);
         var title = (newQuest.Title ?? string.Empty).Trim();
-        if (await _context.Quests.AnyAsync(q => q.Title == title))
+        if (await _quests.TitleExistsAsync(title))
             ModelState.AddModelError("NewQuest.Title", "A quest with this title already exists.");
 
         if (!ModelState.IsValid) return await CreateFormAsync(newQuest, clearModelState: false);
@@ -253,8 +265,7 @@ public class QuestsController : Controller
 
         try
         {
-            _context.Quests.Add(quest);
-            await _context.SaveChangesAsync();
+            await _quests.AddAsync(quest);
             _logger.LogInformation("Created quest {QuestId} ({Title}) with {QuestionCount} questions", quest.Id, quest.Title, quest.Questions.Count);
         }
         catch (DbUpdateException ex)
@@ -274,10 +285,7 @@ public class QuestsController : Controller
     {
         if (id is null) return BadRequest();
 
-        var quest = await _context.Quests
-            .AsNoTracking()
-            .Include(q => q.Questions).ThenInclude(q => q.Options)
-            .FirstOrDefaultAsync(q => q.Id == id);
+        var quest = await _quests.GetWithQuestionsAsync(id.Value);
         if (quest is null)
         {
             _logger.LogWarning("Quest {QuestId} not found for editing", id);
@@ -301,7 +309,7 @@ public class QuestsController : Controller
         int? removeQuestion)
     {
         if (id != newQuest.Id) return BadRequest();
-        var permission = await _context.Quests.AsNoTracking().FirstOrDefaultAsync(q => q.Id == id);
+        var permission = await _quests.GetByIdAsync(id);
         if (permission is null) return NotFound();
         if (!CanEditQuest(permission)) return Forbid();
 
@@ -312,14 +320,12 @@ public class QuestsController : Controller
 
         ValidateQuest(newQuest);
         var title = (newQuest.Title ?? string.Empty).Trim();
-        if (await _context.Quests.AnyAsync(q => q.Title == title && q.Id != id))
+        if (await _quests.TitleExistsAsync(title, id))
             ModelState.AddModelError("NewQuest.Title", "A quest with this title already exists.");
 
         if (!ModelState.IsValid) return await CreateFormAsync(newQuest, clearModelState: false);
 
-        var quest = await _context.Quests
-            .Include(q => q.Questions).ThenInclude(q => q.Options)
-            .FirstOrDefaultAsync(q => q.Id == id);
+        var quest = await _quests.GetWithQuestionsAsync(id, tracking: true);
         if (quest is null)
         {
             _logger.LogWarning("Quest {QuestId} not found for saving", id);
@@ -327,19 +333,18 @@ public class QuestsController : Controller
         }
 
         // Replace the old questions/options with what was posted
-        _context.QuestQuestions.RemoveRange(quest.Questions);
         quest.Questions.Clear();
         ApplyToEntity(quest, newQuest);
 
         try
         {
-            await _context.SaveChangesAsync();
+            await _quests.UpdateAsync(quest);
             _logger.LogInformation("Updated quest {QuestId} ({Title})", id, quest.Title);
         }
         catch (DbUpdateConcurrencyException ex)
         {
             // Someone deleted the quest while this edit was open
-            if (!await _context.Quests.AnyAsync(q => q.Id == id)) return NotFound();
+            if (!await _quests.ExistsAsync(id)) return NotFound();
             _logger.LogError(ex, "Concurrency conflict updating quest {QuestId}", id);
             ModelState.AddModelError(string.Empty, "This quest was changed elsewhere. Reload and try again.");
             return await CreateFormAsync(newQuest, clearModelState: false);
@@ -360,10 +365,7 @@ public class QuestsController : Controller
     public async Task<IActionResult> Delete(int? id)
     {
         if (id is null) return BadRequest();
-        var quest = await _context.Quests
-            .AsNoTracking()
-            .Include(q => q.Questions)
-            .FirstOrDefaultAsync(q => q.Id == id);
+        var quest = await _quests.GetWithQuestionsAsync(id.Value);
         if (quest is null)
         {
             _logger.LogWarning("Quest {QuestId} not found for deletion", id);
@@ -377,14 +379,13 @@ public class QuestsController : Controller
     [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var quest = await _context.Quests.FindAsync(id);
+        var quest = await _quests.GetByIdAsync(id);
         if (quest is null) return RedirectToAction(nameof(Quests), new { section = "create" });
 
         try
         {
             // Its questions and options are removed by the database (cascade delete)
-            _context.Quests.Remove(quest);
-            await _context.SaveChangesAsync();
+            await _quests.DeleteAsync(quest);
             _logger.LogInformation("Deleted quest {QuestId} ({Title})", id, quest.Title);
             TempData["Success"] = "Quest deleted.";
         }
@@ -429,26 +430,11 @@ public class QuestsController : Controller
 
     private async Task<List<QuestListItemViewModel>> LoadMyQuestsAsync(QuestFilterViewModel? filter = null)
     {
-        var query = _context.Quests.AsNoTracking();
         var userId = User.GetUserId();
         var isAdmin = User.IsInRole(AppRoles.Admin);
-        if (userId.HasValue && !isAdmin)
-            query = query.Where(q => q.CreatorUserId == userId.Value);
-
-        if (!string.IsNullOrWhiteSpace(filter?.SearchText))
-        {
-            var text = filter.SearchText;
-            query = query.Where(q => EF.Functions.Like(q.Title, $"%{text}%"));
-        }
-
-        if (filter?.Difficulty is Difficulty level)
-        {
-            var levelName = level.ToString();
-            query = query.Where(q => EF.Functions.Like(q.Difficulty, levelName));
-        }
-
-        return await query
-        .OrderBy(q => q.Title)
+        var quests = await _quests.SearchAsync(filter?.SearchText, filter?.Difficulty?.ToString(),
+            creatorId: isAdmin ? null : userId);
+        return quests
         .Select(q => new QuestListItemViewModel
         {
             Id = q.Id,
@@ -456,11 +442,11 @@ public class QuestsController : Controller
             Difficulty = q.Difficulty,
             CreatedAt = q.CreatedAt,
             QuestionCount = q.Questions.Count,
-            TotalPoints = q.Questions.Sum(x => (int?)x.Points) ?? 0,
+            TotalPoints = q.Questions.Sum(x => x.Points),
             CanEdit = isAdmin || (userId.HasValue && q.CreatorUserId == userId.Value),
             CanDelete = isAdmin
         })
-        .ToListAsync();
+        .ToList();
     }
     
 
@@ -590,40 +576,28 @@ public class QuestsController : Controller
             .ToList()
     };
 
-        private async Task<List<QuestCardViewModel>> LoadExploreQuestsAsync(QuestFilterViewModel filter)
+    private async Task<List<QuestCardViewModel>> LoadExploreQuestsAsync(QuestFilterViewModel filter, bool savedOnly = false)
     {
-        var query = _context.Quests.AsNoTracking();
-
-        if (!string.IsNullOrWhiteSpace(filter.SearchText))
-        {
-            query = query.Where(q => EF.Functions.Like(q.Title, $"%{filter.SearchText}%"));
-        }
-
-        if (filter.Difficulty is Difficulty level)
-        {
-            var levelName = level.ToString();
-            query = query.Where(q => EF.Functions.Like(q.Difficulty, levelName));
-        }
-
-        var cards = await query
-            .OrderByDescending(q => q.CreatedAt)
-            .ThenBy(q => q.Title)
+        var userId = User.GetUserId();
+        if (savedOnly && userId is null) return [];
+        var quests = await _quests.SearchAsync(filter.SearchText, filter.Difficulty?.ToString(),
+            savedByUserId: savedOnly ? userId : null);
+        var savedIds = userId.HasValue ? (await _quests.GetSavedIdsAsync(userId.Value)).ToHashSet() : [];
+        var cards = quests.OrderByDescending(q => q.CreatedAt).ThenBy(q => q.Title)
             .Select(q => new QuestCardViewModel
             {
                 Id = q.Id,
                 Title = q.Title,
                 DifficultyLabel = q.Difficulty,
-                Points = q.Questions.Sum(x => (int?)x.Points) ?? 0,
-                Status = QuestStatus.NotStarted
-            })
-            .ToListAsync();
+                Points = q.Questions.Sum(x => x.Points),
+                Status = QuestStatus.NotStarted,
+                IsSaved = savedIds.Contains(q.Id)
+            }).ToList();
 
         // Mark the quests the signed-in user has completed, with their best score as the progress
-        if (User.GetUserId() is int userId)
+        if (userId.HasValue)
         {
-            var bestScores = await _context.QuestCompletions.AsNoTracking()
-                .Where(c => c.UserId == userId)
-                .ToDictionaryAsync(c => c.QuestId, c => c.MaxScore == 0 ? 100 : c.BestScore * 100 / c.MaxScore);
+            var bestScores = await _quests.GetBestPercentAsync(userId.Value);
 
             foreach (var card in cards)
             {
@@ -662,9 +636,4 @@ public class QuestsController : Controller
         return [];
     }
 
-    private List<QuestCardViewModel> LoadSavedQuests(QuestFilterViewModel filter)
-    {
-        // DATABASE HOOK: connect the database here. 
-        return [];
-    }
 }

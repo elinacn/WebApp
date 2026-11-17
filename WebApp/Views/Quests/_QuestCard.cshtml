@@ -5,6 +5,9 @@
 <article class="quest-card">
     <form class="quest-save-form" asp-controller="Quests" asp-action="ToggleSave" method="post">
         <input type="hidden" name="questId" value="@Model.Id" />
+        <input type="hidden" name="section" value="@Context.Request.Query["section"]" />
+        <input type="hidden" name="searchText" value="@Context.Request.Query["searchText"]" />
+        <input type="hidden" name="difficulty" value="@Context.Request.Query["difficulty"]" />
         <button class="quest-save-btn @(Model.IsSaved ? "is-saved" : null)"
                 type="submit"
                 aria-label="@(Model.IsSaved ? "Unsave quest" : "Save quest")">

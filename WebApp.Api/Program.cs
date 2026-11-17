@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Api.Data;
+using WebApp.Api.DAL;
 using WebApp.Api.Extensions;
 using WebApp.Api.Middleware;
 using WebApp.Api.Models;
@@ -23,6 +24,10 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddScoped<IQuestRepository, QuestRepository>();
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IProgressRepository, ProgressRepository>();
 builder.Services.AddSingleton<QuestGradingService>();
 builder.Services.AddScoped<QuestScoringService>();
 builder.Services.AddScoped<StreakService>();
@@ -56,8 +61,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Events.OnValidatePrincipal = async context =>
         {
             var userId = context.Principal?.GetUserId();
-            var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
-            if (userId is null || !await db.Users.AnyAsync(u => u.Id == userId))
+            var users = context.HttpContext.RequestServices.GetRequiredService<IUserRepository>();
+            if (userId is null || !await users.ExistsAsync(userId.Value))
             {
                 context.RejectPrincipal();
                 await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApp.Api.Data;
+using WebApp.Api.DAL;
 using WebApp.Api.Dtos;
 using WebApp.Api.Extensions;
 using WebApp.Api.Models;
@@ -15,13 +14,13 @@ namespace WebApp.Api.Controllers;
 [Authorize(Roles = Roles.Admin)]
 public class UsersController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly IUserRepository _users;
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly ILogger<UsersController> _logger;
 
-    public UsersController(AppDbContext db, IPasswordHasher<User> passwordHasher, ILogger<UsersController> logger)
+    public UsersController(IUserRepository users, IPasswordHasher<User> passwordHasher, ILogger<UsersController> logger)
     {
-        _db = db;
+        _users = users;
         _passwordHasher = passwordHasher;
         _logger = logger;
     }
@@ -30,32 +29,20 @@ public class UsersController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<UserDto>>> GetAll(string? search, string? program, string? role)
     {
-        var query = _db.Users.AsNoTracking();
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var text = search.Trim();
-            query = query.Where(u => EF.Functions.Like(u.Name, $"%{text}%") || EF.Functions.Like(u.Username, $"%{text}%"));
-        }
-        if (!string.IsNullOrWhiteSpace(program))
-            query = query.Where(u => u.StudyProgram == program);
-        if (!string.IsNullOrWhiteSpace(role))
-            query = query.Where(u => u.Role == role);
-
-        var users = await query.OrderBy(u => u.Name).ToListAsync();
+        var users = await _users.SearchAsync(search, program, role);
         return users.Select(u => u.ToDto()).ToList();
     }
 
     // GET /api/users/programs – the distinct study programs, for the filter dropdown
     [HttpGet("programs")]
     public async Task<ActionResult<List<string>>> GetPrograms() =>
-        await _db.Users.Select(u => u.StudyProgram).Distinct().OrderBy(p => p).ToListAsync();
+        await _users.GetProgramsAsync();
 
     // GET /api/users/3
     [HttpGet("{id:int}")]
     public async Task<ActionResult<UserDto>> Get(int id)
     {
-        var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+        var user = await _users.GetByIdAsync(id);
         if (user is null)
         {
             _logger.LogWarning("User {UserId} not found", id);
@@ -75,8 +62,7 @@ public class UsersController : ControllerBase
         // Points and quizzes completed start at 0; they only come from quest results
         var user = new User { Username = form.Username, Name = form.Name, StudyProgram = form.StudyProgram, Role = form.Role };
         user.PasswordHash = _passwordHasher.HashPassword(user, form.Password);
-        _db.Users.Add(user);
-        await _db.SaveChangesAsync();
+        await _users.AddAsync(user);
 
         _logger.LogInformation("User {AdminId} created user {UserId} ({Username}, {Role})", User.GetUserId(), user.Id, user.Username, user.Role);
         return CreatedAtAction(nameof(Get), new { id = user.Id }, user.ToDto());
@@ -86,7 +72,7 @@ public class UsersController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, UserUpdateDto form)
     {
-        var user = await _db.Users.FindAsync(id);
+        var user = await _users.GetByIdAsync(id);
         if (user is null) return NotFound();
 
         Normalize(form);
@@ -104,7 +90,7 @@ public class UsersController : ControllerBase
         user.Role = form.Role;
         if (!string.IsNullOrEmpty(form.NewPassword))
             user.PasswordHash = _passwordHasher.HashPassword(user, form.NewPassword);
-        await _db.SaveChangesAsync();
+        await _users.UpdateAsync(user);
 
         _logger.LogInformation("User {AdminId} updated user {UserId}{PasswordChanged}",
             User.GetUserId(), id, string.IsNullOrEmpty(form.NewPassword) ? "" : " (password changed)");
@@ -118,11 +104,10 @@ public class UsersController : ControllerBase
         if (id == User.GetUserId())
             return Conflict(new ProblemDetails { Status = 409, Title = "You can't delete your own account while signed in." });
 
-        var user = await _db.Users.FindAsync(id);
+        var user = await _users.GetByIdAsync(id);
         if (user is null) return NotFound();
 
-        _db.Users.Remove(user);
-        await _db.SaveChangesAsync();
+        await _users.DeleteAsync(user);
 
         _logger.LogInformation("User {AdminId} deleted user {UserId} ({Username})", User.GetUserId(), id, user.Username);
         return NoContent();
@@ -142,7 +127,7 @@ public class UsersController : ControllerBase
 
         // Usernames are unique ignoring case, since sign-in ignores case too
         var name = form.Username.ToLower();
-        if (await _db.Users.AnyAsync(u => u.Username.ToLower() == name && u.Id != userId))
+        if (await _users.UsernameExistsAsync(name, userId))
             ModelState.AddModelError(nameof(UserFormDto.Username), "This username is already taken.");
     }
 }

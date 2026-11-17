@@ -1,15 +1,15 @@
-using Microsoft.EntityFrameworkCore;
+using WebApp.DAL;
 using WebApp.Models;
 
 namespace WebApp.Services;
 
 public class DailyStreakService
 {
-    private readonly SheetsDbContext _context;
+    private readonly IProgressRepository _progress;
 
-    public DailyStreakService(SheetsDbContext context)
+    public DailyStreakService(IProgressRepository progress)
     {
-        _context = context;
+        _progress = progress;
     }
     
     public async Task<List<bool>> GetCurrentWeekActivityAsync(string userId)
@@ -22,10 +22,7 @@ public class DailyStreakService
         var monday = today.AddDays(-diff);
         var sunday = monday.AddDays(6);
 
-        var activeDates = await _context.DailyStreaks
-            .Where(s => s.UserId == userId && s.ActivityDate >= monday && s.ActivityDate <= sunday)
-            .Select(s => s.ActivityDate)
-            .ToListAsync();
+        var activeDates = await _progress.GetActivityDatesAsync(userId, monday, sunday);
 
         var activeSet = activeDates.ToHashSet();
         var weekStatus = new List<bool>();
@@ -46,9 +43,7 @@ public class DailyStreakService
 
         var today = DateOnly.FromDateTime(osloTime);
 
-        var alreadyRecorded = await _context.DailyStreaks
-            .AnyAsync(s => s.UserId == userId &&
-                           s.ActivityDate == today);
+        var alreadyRecorded = await _progress.HasActivityAsync(userId, today);
 
         if (alreadyRecorded)
         {
@@ -61,8 +56,7 @@ public class DailyStreakService
             ActivityDate = today
         };
 
-        _context.DailyStreaks.Add(activity);
-        await _context.SaveChangesAsync();
+        await _progress.AddActivityAsync(activity);
     }
     public async Task<int> GetStreakAsync(string userId)
     {
@@ -72,10 +66,7 @@ public class DailyStreakService
 
     var today = DateOnly.FromDateTime(osloTime);
 
-    var dates = await _context.DailyStreaks
-        .Where(s => s.UserId == userId)
-        .Select(s => s.ActivityDate)
-        .ToListAsync();
+    var dates = await _progress.GetActivityDatesAsync(userId);
 
     var activityDays = dates.ToHashSet();
 
