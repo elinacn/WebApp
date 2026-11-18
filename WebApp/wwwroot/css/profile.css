@@ -11,7 +11,7 @@
     padding: 0 36px 28px;
     background: var(--profile-background);
     color: var(--profile-text);
-    font-family: Arial, sans-serif;    
+    font-family: "Segoe UI";  
     line-height: 1.5;
 }
 .profile-container *, .profile-container *::before, .profile-container *::after {

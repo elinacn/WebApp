@@ -30,6 +30,7 @@ body {
   background-repeat: no-repeat;
   margin: 0;
   margin-bottom: 60px;
+  font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
